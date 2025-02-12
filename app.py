@@ -30,18 +30,20 @@ if uploaded_file:
     columns = ["Createur", "Date Création", "Service"]
 
     # convert date columns to datetime
-    df["Date Création"]=pd.to_datetime(df["Date Création"], format="%d/%m/%Y")
-
-
+    df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y")
 
     df_filtered = df
     filters = {}
 
     for column in columns:
-
         if df[column].dtype == 'object':
             unique_values = df[column].unique().tolist()
-            selected_values = st.multiselect(f"Filter {column}", unique_values)
+
+            if column=="Service":
+                selected_values = st.multiselect(f"Filter {column}", unique_values, default="DRV FSI développement")
+            else:
+                selected_values = st.multiselect(f"Filter {column}", unique_values)
+
             if selected_values:
                 filters[column] = selected_values
         elif df[column].dtype in ['int64', 'float64']:
@@ -53,7 +55,8 @@ if uploaded_file:
         elif pd.api.types.is_datetime64_any_dtype(df[column]):
             min_date = df[column].min()
             max_date = df[column].max()
-            selected_date_range = st.date_input(f"Filter {column}", [min_date, max_date], min_value=min_date, max_value=max_date)
+            selected_date_range = st.date_input(f"Filter {column}", [min_date.date(), max_date.date()], min_value=min_date.date(), max_value=max_date.date())
+            selected_date_range = [pd.to_datetime(date) for date in selected_date_range]
             if selected_date_range != [min_date, max_date]:
                 filters[column] = selected_date_range
 
@@ -63,11 +66,26 @@ if uploaded_file:
         else:
             df_filtered = df_filtered[(df_filtered[column] >= filter_value[0]) & (df_filtered[column] <= filter_value[1])]
 
+    st.write("### Preview of Data", df.head())
     st.write("Raw dataset", df_filtered.shape[0])
 
+    # add a pie chart of the filtered data countries 
+    #st.write("### Pie chart of the filtered data")
+    #fig, ax = plt.subplots()
+    #df_filtered['Financeurs::Pays'].value_counts().plot.pie(autopct='%1.1f%%', ax=ax)
+    #st.pyplot(fig)
 
+    # plot occ evolution over time 
+    st.write("### Occurences evolution over time")
+    occurences = df_filtered.groupby("Date Création").size()
 
+    fig, ax = plt.subplots()
+    occurences.plot(kind="bar", ax=ax)
+    plt.xticks(rotation=45)
+    # plot the bar chart in jupyther
+    st.pyplot(fig)
     
+
 
     
 

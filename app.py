@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 
 """
@@ -41,7 +42,11 @@ def create_filters(df,column):
         elif df[column].dtype in ['int64', 'float64']:
             min_value = df[column].min()
             max_value = df[column].max()
-            selected_range = st.slider(f"Filter {column}", min_value, max_value, (min_value, max_value))
+            if column=="Year":
+                selected_range = st.slider(f"Filter {column}", min_value, max_value, (2020, max_value))
+            else :
+                selected_range = st.slider(f"Filter {column}", min_value, max_value, (min_value, max_value))
+
             if selected_range != (min_value, max_value):
                 filters[column] = selected_range
         elif pd.api.types.is_datetime64_any_dtype(df[column]):
@@ -53,7 +58,7 @@ def create_filters(df,column):
                 filters[column] = selected_date_range
     return filters
 
-def generate_diplay_message(occurences):
+def generate_display_message(occurences):
 # 		       Phase
 # Outil du cadre	        Phase	
 # CDDP	en gestion	        12
@@ -91,7 +96,15 @@ def generate_diplay_message(occurences):
         message
     return message
 
-
+columns = ["Contact princpal DR&I",
+               "Service",
+               "Intitule structure",
+               "Outil du cadre",
+               "Action",
+               "Type contrat",
+               "Acteurs::Dénomination",
+               "Year"
+               ]#, "Date Création"
 
 
 #my_data = pd.read_csv('/Users/alichemkhi/Downloads/jobs_to_delete_tabs.tsv',names=['id','code','name','mail',"start-end","date",'nan'], sep='	')
@@ -103,23 +116,17 @@ uploaded_file = st.file_uploader("Upload your Excel/CSV/TSV file", type=["xlsx",
 if uploaded_file:
     
     df=read_excel(uploaded_file)
+    df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y") # convert date columns to datetime
+    df["Year"] = df["Date Création"].dt.year.astype(int)
 
-
+    
     # Interactive filtering
     st.write("### Filter Data")
-    columns = ["Createur",
-               "Service",
-               "Intitule structure",
-               "Outil du cadre",
-               "Action",
-               "Type contrat",
-               "Acteurs::Dénomination",
-               ]#, "Date Création"
     
     
-    
-    df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y") # convert date columns to datetime
     df_filtered = df
+    df_filtered.fillna("introuvalble", inplace=True)
+
     
 
     filters=create_filters(df,columns)
@@ -134,12 +141,116 @@ if uploaded_file:
     st.write("Raw dataset", df_filtered.shape[0])
 
     if ( "Outil du cadre" in filters.keys() ) and ("CIFRE" in filters["Outil du cadre"] or "CDDP" in filters["Outil du cadre"]):
+        
         df_filtered=df_filtered[df_filtered["Outil du cadre"].isin(["CDDP","CIFRE"])]
         occurences = df_filtered.groupby(["Outil du cadre","Phase"]).agg({"Phase": "count"})
         st.write(occurences)
-        message =generate_diplay_message(occurences)
-        st.write(message)
+        
+        # display 
+        #message =generate_display_message(occurences)
+        #st.write(message)
 
+
+        # ------------------------------------Piechart
+        switch_dict={
+            "FRANCE // FRANCE" :"FRANCE",
+            "FRANCE // FRANCE // FRANCE" : "FRANCE",
+            "FRANCE //":"FRANCE",
+            "FR": "FRANCE"
+        }
+        df_filtered["Pays"]=df_filtered["Financeurs::Pays"].map( lambda x : x.strip().upper() )
+        df_filtered["Pays"]=df_filtered["Pays"].map( lambda x : switch_dict[x] if x in switch_dict.keys() else x  )
+
+
+        grouped_df = df_filtered["Pays"].value_counts().reset_index()
+        grouped_df.columns = ["Pays", "Count"]  # Rename columns
+
+        fig = px.pie(grouped_df, names="Pays", values="Count", 
+                    title="Distribution par pays", 
+                    hole=0.4,  # Makes it a donut chart (set to 0 for a full pie)
+                    color_discrete_sequence=px.colors.qualitative.Set2)
+
+        # Display in Streamlit
+        st.write("### Category Count Bar Plot")
+        st.plotly_chart(fig)
+
+        # ------------------------------------BAR PLOTS
+        # Contact princpal DR&I
+        grouped_df = df_filtered["Contact princpal DR&I"].value_counts().reset_index()
+        grouped_df.columns = ["Contact princpal DR&I", "Count"]  # Rename columns
+        
+        fig = px.bar(grouped_df, y="Contact princpal DR&I", x="Count", 
+                    title="Category Count",
+                    text_auto=True, 
+                    color="Contact princpal DR&I",
+                    orientation="h")
+
+        fig.update_layout(
+            showlegend=False,
+            width=1000,  # Set width of the plot
+            height=600   # Set height of the plot
+        )
+
+        # ------------------------------------BAR PLOTS
+        # Contact Intitule structure
+        # Check for NaN and replace with 'Unavailable'
+        df_filtered["Intitule structure"].fillna("Unavailable", inplace=True)
+
+        # Create the grouped DataFrame for "Intitule structure"
+        grouped_df2 = df_filtered["Intitule structure"].value_counts().reset_index()
+        grouped_df2.columns = ["Intitule structure", "Count"]  # Rename columns
+
+        # Create the bar plot for "Intitule structure"
+        fig2 = px.bar(grouped_df2, y="Intitule structure", x="Count", 
+                    title="Intitule structure Count",
+                    text_auto=True, 
+                    color="Intitule structure",
+                    orientation="h")
+        
+        fig2.update_layout(
+            showlegend=False,
+            width=2000,  # Set width of the plot
+            height=600,   # Set height of the plot
+            yaxis=dict(
+            tickfont=dict(size=8)  # Set the font size for y-axis labels
+            )
+        )
+
+        
+        # ------------------------------------BAR PLOTS
+        # Contact Type contrat
+        df_filtered["Type contrat"].fillna("Unavailable", inplace=True)
+
+        # Create the grouped DataFrame for "Type contrat"
+        grouped_df3 = df_filtered["Type contrat"].value_counts().reset_index()
+        grouped_df3.columns = ["Type contrat", "Count"]  # Rename columns
+
+        fig3 = px.bar(grouped_df3, y="Type contrat", x="Count", 
+                    title="Type contrat Count",
+                    text_auto=True, 
+                    color="Type contrat",
+                    orientation="h")
+
+        fig3.update_layout(
+            showlegend=False,
+            width=2000,  # Set width of the plot
+            height=600,   # Set height of the plot
+        )
+
+        # ------------------------------------TABS
+        tab = st.radio("Select a Plot", ("Contact principal DR&I", "Intitule structure", "Type contrat"))
+
+        if tab == "Contact principal DR&I":
+            st.write("### Contact principal DR&I Count Bar Plot")
+            st.plotly_chart(fig)
+
+        elif tab == "Intitule structure":
+            st.write("### Intitule structure Count Bar Plot")
+            st.plotly_chart(fig2, use_container_width=True)
+
+        elif tab == "Type contrat":
+            st.write("### Type contrat Count Bar Plot")
+            st.plotly_chart(fig3, use_container_width=True)
 
         
 

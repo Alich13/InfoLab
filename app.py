@@ -3,14 +3,48 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
+import altair as alt
 
 
 """
 [emoji]: https://streamlit-emoji-shortcodes-streamlit-app-gwckff.streamlit.app/
-
 """
 
+# TODO: 
+# * Mitigate column names key errors (if the input file changes)
+# * Fix warning 
 # streamlit run app.py
+
+
+switch_dict_spelling={
+            "Intitule structure" : "Unité",
+            "Contact princpal DR&I" : "Contact principal DR&I",
+            "Year" : "Année",
+            "Type contrat" : "Type de contrat",
+            "Acteurs::Dénomination" :"Dénomination d'acteurs",
+            "Acteurs::Type" : "Type d'acteurs"
+        }
+
+columns = ["Contact princpal DR&I",
+               "Service",
+               "Intitule structure",
+               "Outil du cadre",
+               "Action",
+               "Type contrat",
+               "Acteurs::Dénomination",
+               "Acteurs::Type",
+               "Year"
+               ]#, "Date Création"
+
+
+switch_dict_country={
+            "FRANCE // FRANCE" :"FRANCE",
+            "FRANCE // FRANCE // FRANCE" : "FRANCE",
+            "FRANCE //":"FRANCE",
+            "FR": "FRANCE"
+        }
+
+
 
 def read_excel(uploaded_file):
     try:
@@ -27,15 +61,18 @@ def read_excel(uploaded_file):
 
     return df
 
+
+
 def create_filters(df,column):
     filters = {}
     for column in columns:
+        column_to_display = switch_dict_spelling[column] if column in switch_dict_spelling.keys() else column
         if df[column].dtype == 'object':
             unique_values = df[column].unique().tolist()
             if column=="Service":
-                selected_values = st.multiselect(f"Filter {column}", unique_values, default="DRV FSI développement")
+                selected_values = st.multiselect(column_to_display, unique_values, default="DRV FSI développement")
             else:
-                selected_values = st.multiselect(f"Filter {column}", unique_values)
+                selected_values = st.multiselect(column_to_display, unique_values)
 
             if selected_values:
                 filters[column] = selected_values
@@ -43,16 +80,16 @@ def create_filters(df,column):
             min_value = df[column].min()
             max_value = df[column].max()
             if column=="Year":
-                selected_range = st.slider(f"Filter {column}", min_value, max_value, (2020, max_value))
+                selected_range = st.slider(column_to_display, min_value, max_value, (2020, max_value))
             else :
-                selected_range = st.slider(f"Filter {column}", min_value, max_value, (min_value, max_value))
+                selected_range = st.slider(column_to_display, min_value, max_value, (min_value, max_value))
 
             if selected_range != (min_value, max_value):
                 filters[column] = selected_range
         elif pd.api.types.is_datetime64_any_dtype(df[column]):
             min_date = df[column].min()
             max_date = df[column].max()
-            selected_date_range = st.date_input(f"Filter {column}", [min_date.date(), max_date.date()], min_value=min_date.date(), max_value=max_date.date())
+            selected_date_range = st.date_input(column_to_display, [min_date.date(), max_date.date()], min_value=min_date.date(), max_value=max_date.date())
             selected_date_range = [pd.to_datetime(date) for date in selected_date_range]
             if selected_date_range != [min_date, max_date]:
                 filters[column] = selected_date_range
@@ -96,41 +133,32 @@ def generate_display_message(occurences):
         message
     return message
 
-columns = ["Contact princpal DR&I",
-               "Service",
-               "Intitule structure",
-               "Outil du cadre",
-               "Action",
-               "Type contrat",
-               "Acteurs::Dénomination",
-               "Year"
-               ]#, "Date Création"
+def preprocess(df):
+        df.fillna("Introuvalble", inplace=True)
+        df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y") # convert date columns to datetime
+        df["Year"] = df["Date Création"].dt.year.astype(int)
+        df["Pays"] = df["Financeurs::Pays"].map( lambda x : x.strip().upper() )
+        df["Pays"] = df["Pays"].map( lambda x : switch_dict_country[x] if x in switch_dict_country.keys() else x  )
+        
 
 
-#my_data = pd.read_csv('/Users/alichemkhi/Downloads/jobs_to_delete_tabs.tsv',names=['id','code','name','mail',"start-end","date",'nan'], sep='	')
+
 st.title("InfoLab Dashboard") 
-
-
 uploaded_file = st.file_uploader("Upload your Excel/CSV/TSV file", type=["xlsx","csv","tsv"])
+st.write("----")
+
+
 
 if uploaded_file:
     
     df=read_excel(uploaded_file)
-    df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y") # convert date columns to datetime
-    df["Year"] = df["Date Création"].dt.year.astype(int)
+    preprocess(df)
 
-    
     # Interactive filtering
-    st.write("### Filter Data")
-    
-    
+    st.write("### Filtres ")
     df_filtered = df
-    df_filtered.fillna("introuvalble", inplace=True)
-
-    
 
     filters=create_filters(df,columns)
-
     for column, filter_value in filters.items():
         if isinstance(filter_value, list):
             df_filtered = df_filtered[df_filtered[column].isin(filter_value)]
@@ -140,137 +168,88 @@ if uploaded_file:
     st.write("### Preview of Data", df_filtered)
     st.write("Raw dataset", df_filtered.shape[0])
 
-    if ( "Outil du cadre" in filters.keys() ) and ("CIFRE" in filters["Outil du cadre"] or "CDDP" in filters["Outil du cadre"]):
-        
-        df_filtered=df_filtered[df_filtered["Outil du cadre"].isin(["CDDP","CIFRE"])]
-        occurences = df_filtered.groupby(["Outil du cadre","Phase"]).agg({"Phase": "count"})
-        st.write(occurences)
-        
-        # display 
-        #message =generate_display_message(occurences)
-        #st.write(message)
+    
+    st.write("---")
+    # ----------------------------------------------------
+
+    occurences = df_filtered.groupby(["Outil du cadre","Phase"]).size().reset_index(name="Count")
+    tab1, tab2 = st.tabs(["📊 Bar Chart", "📋 Source Data"])
+    with tab1:
+        st.write("### Category Count Bar Chart")
+        chart = alt.Chart(occurences).mark_bar().encode(
+            x=alt.X("Count:Q", title="Count"),
+            y=alt.Y("Outil du cadre:N", sort="-x", title="Outil du cadre"),
+            color="Phase:N"
+        ).properties(width=800, height=600)
+        st.write(chart)
+    with tab2:
+        st.write("### Source Data")
+        st.dataframe(occurences)  # Display the table
 
 
-        # ------------------------------------Piechart
-        switch_dict={
-            "FRANCE // FRANCE" :"FRANCE",
-            "FRANCE // FRANCE // FRANCE" : "FRANCE",
-            "FRANCE //":"FRANCE",
-            "FR": "FRANCE"
-        }
-        df_filtered["Pays"]=df_filtered["Financeurs::Pays"].map( lambda x : x.strip().upper() )
-        df_filtered["Pays"]=df_filtered["Pays"].map( lambda x : switch_dict[x] if x in switch_dict.keys() else x  )
+    st.write("---")
+    # ----------------------------------------------------
 
+    tab3, tab4,tab5 = st.tabs(["Contact principal", "Unité","Type de contrat"])
 
-        grouped_df = df_filtered["Pays"].value_counts().reset_index()
-        grouped_df.columns = ["Pays", "Count"]  # Rename columns
+    with tab3:
+        grouped_df = df_filtered["Contact princpal DR&I"].value_counts().reset_index(name="Count")
+        # Sort by Count in descending order
+        grouped_df = grouped_df.sort_values(by="Count", ascending=False)
+        # Convert category column to ordered categorical type to preserve sorting
+        grouped_df["Contact princpal DR&I"] = pd.Categorical(
+            grouped_df["Contact princpal DR&I"], categories=grouped_df["Contact princpal DR&I"], ordered=True
+        )
+        st.write(alt.Chart(grouped_df).mark_bar().encode(
+            x=alt.X('Contact princpal DR&I', sort=None),
+            y='Count',
+        ))
 
-        fig = px.pie(grouped_df, names="Pays", values="Count", 
-                    title="Distribution par pays", 
-                    hole=0.4,  # Makes it a donut chart (set to 0 for a full pie)
-                    color_discrete_sequence=px.colors.qualitative.Set2)
+    with tab4:
+
+        # Group and count occurrences for "Acteurs::Type"
+        grouped_df4 = df_filtered["Acteurs::Type"].value_counts().reset_index()
+        grouped_df4.columns = ["type", "Count"]
+        # Create the Altair bar chart
+        chart4 = alt.Chart(grouped_df4).mark_bar().encode(
+            x=alt.X("Count:Q", title="Count"),
+            y=alt.Y("type:N", sort="-x", title="type acteur"),  # Ensures correct sorting
+            color=alt.Color("type:N", legend=None)  # Remove legend for simplicity
+        ).properties(width=1000, height=600)  # Adjust plot size
 
         # Display in Streamlit
-        st.write("### Category Count Bar Plot")
-        st.plotly_chart(fig)
+        st.write("### Acteurs Type Count Bar Chart")
+        st.write(chart4)
 
-        # ------------------------------------BAR PLOTS
-        # Contact princpal DR&I
-        grouped_df = df_filtered["Contact princpal DR&I"].value_counts().reset_index()
-        grouped_df.columns = ["Contact princpal DR&I", "Count"]  # Rename columns
-        
-        fig = px.bar(grouped_df, y="Contact princpal DR&I", x="Count", 
-                    title="Category Count",
-                    text_auto=True, 
-                    color="Contact princpal DR&I",
-                    orientation="h")
-
-        fig.update_layout(
-            showlegend=False,
-            width=1000,  # Set width of the plot
-            height=600   # Set height of the plot
-        )
-
-        # ------------------------------------BAR PLOTS
-        # Contact Intitule structure
-        # Check for NaN and replace with 'Unavailable'
-        df_filtered["Intitule structure"].fillna("Unavailable", inplace=True)
-
-        # Create the grouped DataFrame for "Intitule structure"
-        grouped_df2 = df_filtered["Intitule structure"].value_counts().reset_index()
-        grouped_df2.columns = ["Intitule structure", "Count"]  # Rename columns
-
-        # Create the bar plot for "Intitule structure"
-        fig2 = px.bar(grouped_df2, y="Intitule structure", x="Count", 
-                    title="Intitule structure Count",
-                    text_auto=True, 
-                    color="Intitule structure",
-                    orientation="h")
-        
-        fig2.update_layout(
-            showlegend=False,
-            width=2000,  # Set width of the plot
-            height=600,   # Set height of the plot
-            yaxis=dict(
-            tickfont=dict(size=8)  # Set the font size for y-axis labels
-            )
-        )
-
-        
-        # ------------------------------------BAR PLOTS
-        # Contact Type contrat
-        df_filtered["Type contrat"].fillna("Unavailable", inplace=True)
-
-        # Create the grouped DataFrame for "Type contrat"
+    with tab5:
+        # Group and count occurrences
         grouped_df3 = df_filtered["Type contrat"].value_counts().reset_index()
-        grouped_df3.columns = ["Type contrat", "Count"]  # Rename columns
+        grouped_df3.columns = ["Type contrat", "Count"]
 
-        fig3 = px.bar(grouped_df3, y="Type contrat", x="Count", 
-                    title="Type contrat Count",
-                    text_auto=True, 
-                    color="Type contrat",
-                    orientation="h")
+        # Create the Altair bar chart
+        chart3 = alt.Chart(grouped_df3).mark_bar().encode(
+            x=alt.X("Count:Q", title="Count"),
+            y=alt.Y("Type contrat:N", sort="-x", title="Type contrat"),  # Ensures correct sorting
+            color=alt.Color("Type contrat:N", legend=None)  # Remove legend for simplicity
+        ).properties(width=1000, height=600)  # Adjust plot size
 
-        fig3.update_layout(
-            showlegend=False,
-            width=2000,  # Set width of the plot
-            height=600,   # Set height of the plot
-        )
-
-        # ------------------------------------TABS
-        tab = st.radio("Select a Plot", ("Contact principal DR&I", "Intitule structure", "Type contrat"))
-
-        if tab == "Contact principal DR&I":
-            st.write("### Contact principal DR&I Count Bar Plot")
-            st.plotly_chart(fig)
-
-        elif tab == "Intitule structure":
-            st.write("### Intitule structure Count Bar Plot")
-            st.plotly_chart(fig2, use_container_width=True)
-
-        elif tab == "Type contrat":
-            st.write("### Type contrat Count Bar Plot")
-            st.plotly_chart(fig3, use_container_width=True)
-
+        # Display in Streamlit
+        st.write("### Type Contrat Count Bar Chart")
+        st.write(chart3)
         
 
+        st.write("---")
+    # ----------------------------------------------------
 
-    # add a pie chart of the filtered data countries 
-    #st.write("### Pie chart of the filtered data")
-    #fig, ax = plt.subplots()
-    #df_filtered['Financeurs::Pays'].value_counts().plot.pie(autopct='%1.1f%%', ax=ax)
-    #st.pyplot(fig)
+    # Pie chart by country 
+    grouped_df = df_filtered["Pays"].value_counts().reset_index()
+    grouped_df.columns = ["Pays", "Count"]  # Rename columns
 
-    # plot occ evolution over time 
-    #st.write("### Occurences evolution over time")
-    #occurences = df_filtered.groupby("Date Création").size()
-    #fig, ax = plt.subplots()
-    #occurences.plot(kind="bar", ax=ax)
-    #plt.xticks(rotation=45)
-    # plot the bar chart in jupyther
-    #st.pyplot(fig)
-    
-
+    fig = px.pie(grouped_df, names="Pays", values="Count", 
+                title="Distribution par pays", 
+                hole=0.4,  # Makes it a donut chart (set to 0 for a full pie)
+                color_discrete_sequence=px.colors.qualitative.Set2)
+    st.plotly_chart(fig)
 
     
 

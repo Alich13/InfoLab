@@ -37,7 +37,7 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
 
     # Prepare data for use
     df_use = df_filtered[["Numero contrat", "Date Création", "Date Premier Contact", 
-                          "Acteurs::Type", "Phase", "Montant Global", "Date de l'action"]]
+                          "Acteurs::Type", "Phase", "Montant Global", "Date de l'action","Acteurs::Sigle"]]
     
     # Calculate duration and aumoins_1_entreprise
     df_use["duree"] = (df_use["Date de l'action"] - df_use["Date Premier Contact"]).dt.days
@@ -49,7 +49,7 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
 
 
     # Filter out rows where Montant Global is 0 or negative
-    df_use = df_use[df_use["Montant Global"] > 0]
+    df_montant_plot = df_use[df_use["Montant Global"] > 0]
 
     # --- Montant Global by aumoins_1_entreprise ---
     st.write("### Montant Global by aumoins_1_entreprise")
@@ -64,9 +64,6 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
     
     st.altair_chart(montant_chart, use_container_width=True)
 
-    # Print average Montant Global for `aumoins_1_entreprise == False`
-    mean_montant = df_use[df_use["aumoins_1_entreprise"] == False]["Montant Global"].mean()
-    
 
     # --- Durée by aumoins_1_entreprise ---
     st.write("### Durée by aumoins_1_entreprise")
@@ -80,6 +77,33 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
     )
 
     st.altair_chart(duree_chart, use_container_width=True)
-    # Print average Durée for `aumoins_1_entreprise == False`
-    mean_duree = df_use[df_use["aumoins_1_entreprise"] == False]["duree"].mean()
+
+
+
+     # --- montant by sigle ---
+    sigle=separate(df_use,column_to_explode = 'Acteurs::Sigle')
+    sigle_merged=sigle.merge(df_use, left_on="Acteurs::Sigle", right_on="Acteurs::Sigle", how="left")
+    sigle_merged = sigle_merged.rename(columns={'Acteurs::Sigle': 'Sigle'})
+    # Filter out rows where Montant Global is 0 or negative
+    df_montant_plot = sigle_merged[sigle_merged["Montant Global"] > 0]
+
+    # --- Montant Global by aumoins_1_entreprise ---
+    # TODO add a top k param
+    st.write("### Montant Global by aumoins_1_entreprise")
+    grouped_df = df_montant_plot.groupby("Sigle")["Montant Global"].mean().reset_index()
+    print(grouped_df)
+    grouped_df = grouped_df.sort_values(by="Montant Global", ascending=False)[0:20]
+    print(grouped_df)
+    montant_chart = alt.Chart(grouped_df).mark_bar().encode(
+        x=alt.X("Sigle:N",sort="-y", title="Acteurs::Sigle"),
+        y=alt.Y("Montant Global:Q", title="Montant Global (€)"),
+        color="Sigle:N",
+        tooltip=["Sigle:N", "Montant Global:Q"]
+    ).properties(
+        title="Top 20 sigle par montant global moyen"
+    )
     
+    st.altair_chart(montant_chart, use_container_width=True)
+
+
+

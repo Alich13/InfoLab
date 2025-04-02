@@ -1,5 +1,7 @@
 import pandas as pd
 import streamlit as st
+
+import altair as alt
 from aux import *
 
 import matplotlib.pyplot as plt
@@ -38,7 +40,7 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
                           "Acteurs::Type", "Phase", "Montant Global", "Date de l'action"]]
     
     # Calculate duration and aumoins_1_entreprise
-    df_use["duree"] = df_use["Date de l'action"] - df_use["Date Premier Contact"]
+    df_use["duree"] = (df_use["Date de l'action"] - df_use["Date Premier Contact"]).dt.days
     df_use["aumoins_1_entreprise"] = df_use["Acteurs::Type"].str.contains("Entreprises", na=False)
 
     # print table
@@ -51,26 +53,33 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
 
     # --- Montant Global by aumoins_1_entreprise ---
     st.write("### Montant Global by aumoins_1_entreprise")
-    fig, ax = plt.subplots()
-    df_use.groupby("aumoins_1_entreprise")["Montant Global"].mean().plot(kind="bar", ax=ax)
-    plt.title("Montant Global ")
-    plt.xlabel("aumoins une entreprise")
-    plt.ylabel("Montant Global")
-    st.pyplot(fig)
+    montant_chart = alt.Chart(df_use.groupby("aumoins_1_entreprise")["Montant Global"].mean().reset_index()).mark_bar().encode(
+        x=alt.X("aumoins_1_entreprise:N", title="aumoins_1_entreprise"),
+        y=alt.Y("Montant Global:Q", title="Montant Global (€)"),
+        color="aumoins_1_entreprise:N",
+        tooltip=["aumoins_1_entreprise:N", "Montant Global:Q"]
+    ).properties(
+        title="Montant Global by aumoins_1_entreprise"
+    )
+    
+    st.altair_chart(montant_chart, use_container_width=True)
 
     # Print average Montant Global for `aumoins_1_entreprise == False`
     mean_montant = df_use[df_use["aumoins_1_entreprise"] == False]["Montant Global"].mean()
-    st.write(f"Average Montant Global for non-entreprises: {mean_montant}")
+    
 
     # --- Durée by aumoins_1_entreprise ---
-    st.write("### Durée ")
-    fig2, ax2 = plt.subplots()
-    df_use.groupby("aumoins_1_entreprise")["duree"].mean().plot(kind="bar", ax=ax2)
-    plt.title("Durée by aumoins_1_entreprise")
-    plt.xlabel("aumoins une entreprise")
-    plt.ylabel("Durée")
-    st.pyplot(fig2)
+    st.write("### Durée by aumoins_1_entreprise")
+    duree_chart = alt.Chart(df_use.groupby("aumoins_1_entreprise")["duree"].mean().reset_index()).mark_bar().encode(
+        x=alt.X("aumoins_1_entreprise:N", title="aumoins_1_entreprise"),
+        y=alt.Y("duree:Q", title="Durée (days)"),
+        color="aumoins_1_entreprise:N",
+        tooltip=["aumoins_1_entreprise:N", "duree:Q"]
+    ).properties(
+        title="Durée by aumoins_1_entreprise"
+    )
 
+    st.altair_chart(duree_chart, use_container_width=True)
     # Print average Durée for `aumoins_1_entreprise == False`
     mean_duree = df_use[df_use["aumoins_1_entreprise"] == False]["duree"].mean()
-    st.write(f"Average Durée for non-entreprises: {mean_duree}")
+    

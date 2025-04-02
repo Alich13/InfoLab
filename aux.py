@@ -130,9 +130,21 @@ def generate_display_message(occurences):
         message
     return message
 
+
+def convert_datatime(date_str):
+    try:
+        return pd.to_datetime(date_str, format="%d/%m/%Y")
+    except ValueError:
+        return pd.NaT
+
 def preprocess(df):
         df.fillna("Introuvalble", inplace=True)
         df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y") # convert date columns to datetime
+        df["Date Premier Contact"] = df["Date Premier Contact"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
+        df["Date de l'action"] = df["Date de l'action"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
+
+        pd.to_datetime(df["Date Premier Contact"], format="%d/%m/%Y") # convert date columns to datetime
+        	    
         df["Year"] = df["Date Création"].dt.year.astype(int)
         df["Pays"] = df["Financeurs::Pays"].map( lambda x : x.strip().upper() )
         df["Pays"] = df["Pays"].map( lambda x : switch_dict_country[x] if x in switch_dict_country.keys() else x  )

@@ -13,22 +13,15 @@ from aux import *
 
 # TODO: 
 # * Mitigate column names key errors (if the input file changes)
-# * Fix warning 
+# check if the column names are in the dataframe
 # streamlit run 📊_Dashbord.py
-
-
 
 st.title("Tableau de bord") 
 st.write("Suivi d'activité globale des labo et aide au développement")
 
+
 uploaded_file = st.file_uploader("Upload your Excel/CSV/TSV file", type=["xlsx","csv","tsv"])
 st.write("----")
-
-# NOTE: "Numero contrat" is the primary key (unique identifier) for the dataframe
-
-# Initialize session state if not set
-if "possible_key_dict" not in st.session_state:
-    st.session_state.possible_key_dict = {}
 
 
 if uploaded_file or True: # For testing purposes, set uploaded_file to True
@@ -53,29 +46,26 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
     contrat_typeacteur] =multi_separate(df,["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type"])
 
     # set the exploded dataframes in session state first time
+    # TODO :  this is not needed for now , but we might need it for automatic filtering mult-selection
     if "current_exploded_dfs" not in st.session_state:
         st.session_state.current_exploded_dfs =exploded_all_dfs
 
 
     # Interactive filtering
     st.write("### Filtres ")
-    # To create new filters, All we need is current filtered dataframe
+
+    # Create a list of columns to filter
+    # the exploded dataframes are used to display the filters values for the exploded columns (ones with multiple values separated by //)
     filters=create_filters(df, # TODO: we need to pass the filtered dataframe
                            exploded_dfs=exploded_all_dfs, #st.session_state.current_exploded_dfs,
                            columns=columns)
-    print(filters)
-    #NOTE: Now that we have the filters, we can apply them to the original dataframe
+    print("Applied filters =" ,filters)
+
+    #Now that we have the filters, we can apply them to the original dataframe
     df_filtered = df.copy() 
-    # Initialize filtered contract-X dataframes
-    contrat_unite_filtered = contrat_unite
-    contrat_codestructure_filtered = contrat_codestructure
-    contrat_acteur_filtered = contrat_acteur
-    contrat_typeacteur_filtered = contrat_typeacteur
     # Apply filters to the dataframe
     for column, filter_value in filters.items():
         if isinstance(filter_value, list):
-           
-            contracts_to_keep= []
             if column == "Intitule structure":
                 filtered_items = contrat_unite[contrat_unite[column].isin(filter_value)]
                 contracts_to_keep = filtered_items["Numero contrat"].unique()
@@ -98,15 +88,21 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
         else:
             df_filtered = df_filtered[(df_filtered[column] >= filter_value[0]) & (df_filtered[column] <= filter_value[1])]
 
-    
+
+    # Save the filtered dataframe in session state    
     st.session_state.current_df_filtered = df_filtered
-    
-    exploded_dfs = [contrat_unite_filtered,
+
+    exploded_filtered_dfs = [contrat_unite_filtered,
     contrat_codestructure_filtered,
     contrat_acteur_filtered,
     contrat_typeacteur_filtered]= multi_separate(df_filtered,["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type"])
 
-    st.session_state.current_exploded_dfs = exploded_dfs
+    st.session_state.current_exploded_dfs = exploded_filtered_dfs
+
+
+    # ----------------------------------------------------------------------------------------------------------#
+    # ##################################### DISPLAY TABLES #####################################################
+    # ----------------------------------------------------------------------------------------------------------#
 
 
     tab0_1, tab0_2 ,tab0_3= st.tabs(["Tous les contrats", "contrats par dénomination","contrats par type acteur"])
@@ -122,10 +118,13 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
 
     
     st.write("---")
-    # ----------------------------------------------------
+
+    # ----------------------------------------------------------------------------------------------------------#
+    # ##################################### PLOTS ##########################################################
+    # ----------------------------------------------------------------------------------------------------------#
 
     occurences = df_filtered.groupby(["Outil du cadre","Phase"]).size().reset_index(name="Count")
-    tab1, tab2 = st.tabs(["📊 Bar Chart", "📋 Source Data"])
+    tab1, tab2 = st.tabs(["📊 Outil du cadre ", "📋 Source Data"])
     with tab1:
         st.write("## Outil du cadre et Phase")
         chart = alt.Chart(occurences).mark_bar().encode(
@@ -139,14 +138,16 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
         st.dataframe(occurences)  # Display the table
 
 
-    st.write("---")
-    # ----------------------------------------------------
+    st.write("---") # -----------------------------------------------------------------------------------------
 
     tab2,tab3,tab4,tab5 = st.tabs(["Acteurs Dénomination","Contacts Structure","Type acteur","Type de contrat"])
 
-    with tab2:
+    with tab2:  # COUNT - VERTICAL
         column_name = "Acteurs::Dénomination"
         new_name="nom_acteur"
+        y_axis_name = "Nombre de contrats"
+
+        # group and count occurrences
         grouped_df = contrat_acteur_filtered[column_name].value_counts().reset_index(name="Count")
         grouped_df.columns = [new_name, "Count"]
         # Sort by Count in descending order
@@ -157,66 +158,68 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
         )
         st.write(alt.Chart(grouped_df).mark_bar().encode(
             x=alt.X(new_name, sort=None),
-            y='Count',
+            y=alt.Y('Count:Q', sort="-x", title=y_axis_name),
+            color=alt.Color(new_name, legend=None)  # Remove legend for simplicity
         ))
-        
-    with tab3:
+
+    with tab3: # COUNT - HORIZONTAL
+
+        y_axis_col = "Contacts Structure"
+        y_axis_name = "Contacts Structure"
+        x_axis_name = "Nombre de contrats"
+
 
         # Group and count occurrences
-        grouped_df3 = df_filtered["Contacts Structure"].value_counts().reset_index()
-        grouped_df3.columns = ["Contacts Structure", "Count"]
-
+        grouped_df3 = df_filtered[y_axis_col].value_counts().reset_index()
+        grouped_df3.columns = [y_axis_col, "Count"]
         # Create the Altair bar chart
-        chart3 = alt.Chart(grouped_df3).mark_bar().encode(
-            x=alt.X("Count:Q", title="Count"),
-            y=alt.Y("Contacts Structure:N", sort="-x", title="Contacts Structure"),  # Ensures correct sorting
-            color=alt.Color("Contacts Structure:N", legend=None)  # Remove legend for simplicity
+        chart = alt.Chart(grouped_df3).mark_bar().encode(
+            x=alt.X("Count:Q", title="Nombre de contrats"),
+            y=alt.Y(f"{y_axis_col}:N", sort="-x", title=y_axis_name),  # Ensures correct sorting
+            color=alt.Color(f"{y_axis_col}:N", legend=None)  # Remove legend for simplicity
         ).properties(width=1000, height=600)  # Adjust plot size
 
-        # Display in Streamlit
-        st.write("### Contacts Structure ")
-        st.write(chart3)
-        
+        st.write(chart)
 
-        st.write("---")
+    with tab4: # COUNT - HORIZONTAL
 
-    with tab4:
+        y_axis_col = "Acteurs::Type"
+        y_axis_name = "type"
+        x_axis_name = "Nombre de contrats"
 
         # Group and count occurrences for "Acteurs::Type"
         grouped_df4 = contrat_typeacteur_filtered["Acteurs::Type"].value_counts().reset_index()
-        grouped_df4.columns = ["type", "Count"]
+        grouped_df4.columns = [y_axis_name, "Count"] 
         # Create the Altair bar chart
-        chart4 = alt.Chart(grouped_df4).mark_bar().encode(
-            x=alt.X("Count:Q", title="Count"),
-            y=alt.Y("type:N", sort="-x", title="type"),  # Ensures correct sorting
-            color=alt.Color("type:N", legend=None)  # Remove legend for simplicity
+        chart = alt.Chart(grouped_df4).mark_bar().encode(
+            x=alt.X("Count:Q", title=x_axis_name),
+            y=alt.Y(f"{y_axis_name}:N", sort="-x", title="type"),  # Ensures correct sorting
+            color=alt.Color(f"{y_axis_name}:N", legend=None)       # Remove legend for simplicity
         ).properties(width=1000, height=600)  # Adjust plot size
 
-        # Display in Streamlit
-        st.write("### Type acteur")
-        st.write(chart4)
+        st.write(chart)
 
-    with tab5:
-        # Group and count occurrences
-        grouped_df3 = df_filtered["Type contrat"].value_counts().reset_index()
-        grouped_df3.columns = ["Type contrat", "Count"]
-
-        # Create the Altair bar chart
-        chart3 = alt.Chart(grouped_df3).mark_bar().encode(
-            x=alt.X("Count:Q", title="Count"),
-            y=alt.Y("Type contrat:N", sort="-x", title="Type contrat"),  # Ensures correct sorting
-            color=alt.Color("Type contrat:N", legend=None)  # Remove legend for simplicity
-        ).properties(width=1000, height=600)  # Adjust plot size
-
-        # Display in Streamlit
-        st.write("### Type contrat ")
-        st.write(chart3)
+    with tab5: # COUNT - HORIZONTAL
         
+        y_axis_col = "Type contrat"
+        y_axis_name = "Type contrat"
+        x_axis_name = "Nombre de contrats"
+        # Group and count occurrences
+        grouped_df3 = df_filtered[y_axis_col].value_counts().reset_index()
+        grouped_df3.columns = [y_axis_col, "Count"]
 
-        st.write("---")
+        # Create the Altair bar chart
+        chart = alt.Chart(grouped_df3).mark_bar().encode(
+            x=alt.X("Count:Q", title=y_axis_name),
+            y=alt.Y(f"{y_axis_col}:N", sort="-x", title=x_axis_name),  # Ensures correct sorting
+            color=alt.Color(f"{y_axis_col}:N", legend=None)  # Remove legend for simplicity
+        ).properties(width=1000, height=600)  # Adjust plot size
 
-    st.write("---")
-    # ----------------------------------------------------
+        st.write(chart)
+
+
+
+    st.write("---") # -----------------------------------------------------------------------------------------
 
     tab6,tab7 = st.tabs(["Financeurs::Soustype ","Financeurs::Soustype & Mantant Global moyen"])
 
@@ -236,7 +239,7 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
 
         # Create the Altair bar chart
         chart3 = alt.Chart(grouped_df3).mark_bar().encode(
-            x=alt.X("Count:Q", title="Count"),
+            x=alt.X("Count:Q", title="Nombre de contrats"),
             y=alt.Y("x_axis_col:N", sort="-x", title=x_axis_col),  # Ensures correct sorting
             color=alt.Color("x_axis_col:N", legend=None)  # Remove legend for simplicity
         ).properties(width=1000, height=600)  # Adjust plot size

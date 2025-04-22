@@ -26,8 +26,8 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     st.write("***Filters appliqués***") 
     st.write("* Service : DRV FSI développement")
     st.write("* Phase : en gestion, archivé")
+    st.write("----")
 
-    
     # add a date filter
     min_value = df["Year"].min()  
     max_value = df["Year"].max()        
@@ -53,23 +53,25 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     # display table
     st.write("### Data Table")
     st.dataframe(df_use)
-    st.write("----")
+    st.write("----") # -----------------------------------------------------
 
-    # -----------------------------------------------------
+    # ----------------------------------------------------------------------------------------------------------#
+    # ##################################### PLOTS 1 ##########################################################
+    # ----------------------------------------------------------------------------------------------------------#
+    
+    #----------------------------------------------------------------------------
     # Montant Global by aumoins_1_entreprise 
-    st.write("### Montant Global (euro)")
-
-    # Filter out rows where Montant Global is 0 or negative
-    df_montant_plot = df_use[df_use["Montant Global"] > 0]
+    st.write("## Montant Global (euro)")
+    df_montant_plot = df_use[df_use["Montant Global"] > 0]  # Filter out rows where Montant Global is 0 or negative
     chart_montant=plot_grouped_bar(df_montant_plot, "aumoins_1_entreprise", "Montant Global", title="", xlabel=None, ylabel=None)
     st.altair_chart(chart_montant, use_container_width=True)
 
-    # Durée by aumoins_1_entreprise 
-    st.write("### Durée (jours)")
 
+    #----------------------------------------------------------------------------
+    # Durée by aumoins_1_entreprise 
+    st.write("## Durée (jours)")
     # Checkbox to filter out negative durations
     filter_negatives = st.checkbox("Filtrer les durées negatives", value=False)
-
     # Apply the filter if checkbox is checked
     if filter_negatives:
         filtered_df = df_use[df_use["duree"] >= 0]
@@ -87,8 +89,12 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
         st.dataframe(filtered_df)  # Display the table
     
     
-    st.write("---")
-    # ----------------------------------------------------
+   
+    st.write("---") #-----------------------------------------------------
+
+
+
+    # ----------------------------------------------------------------------------------------------------------#
     # montant by Acteurs::Sous-type 
 
     sigle=separate(df_use,column_to_explode = 'Acteurs::Sous-type')
@@ -136,9 +142,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     # chart_stacked=stacked_plot_grouped_bar(sigle_merged,  "aumoins_1_entreprise", "soustype", "duree", title=" Durée moyenne par type de financeur ", xlabel=None, ylabel=None)
 
 
-
     # Display the charts
-
     st.write("***Pour la moyenne montant globale , on a filtré les lignes vides ! .***")
     tab1, tab2 = st.tabs(["Financeur soustype", "Acteur soustype"])
     with tab1:

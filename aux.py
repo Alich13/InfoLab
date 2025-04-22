@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+import altair as alt
 
 switch_dict_spelling={
             "Intitule structure" : "Unité",
@@ -13,21 +14,13 @@ switch_dict_spelling={
 columns = ["Contact princpal DR&I",
                "Service",
                "Intitule structure",
+               "Code structure",
                "Outil du cadre",
                "Type contrat",
                "Acteurs::Dénomination",
                "Acteurs::Type",
                "Year"
                ]#, "Date Création"
-
-
-switch_dict_country={
-            "FRANCE // FRANCE" :"FRANCE",
-            "FRANCE // FRANCE // FRANCE" : "FRANCE",
-            "FRANCE //":"FRANCE",
-            "FR": "FRANCE"
-        }
-
 
 
 def read_excel(uploaded_file):
@@ -47,10 +40,56 @@ def read_excel(uploaded_file):
 
 
 
-def create_filters(df,
-                   keys : st.session_state, #possible values in multiselect
-                   columns):
-    print(keys)
+def separate(df,column_to_explode):
+    # Normalize: Convert into a separate table
+
+    contract_actors = df[['Numero contrat', column_to_explode]].copy()
+    contract_actors[column_to_explode] = contract_actors[column_to_explode].str.split(' // ')
+    contract_actors = contract_actors.explode(column_to_explode)
+    contract_actors[column_to_explode] = contract_actors[column_to_explode].str.strip()
+
+    return contract_actors
+
+# when a function is deterministic (always gives the same result for the same input), and you want Streamlit to remember its result.
+@st.cache_data
+def multi_separate(df,columns_to_explode):
+    exploded_dfs = []
+    for column in columns_to_explode:
+        separated_df = separate(df, column)
+        exploded_dfs.append(separated_df)
+    return exploded_dfs
+
+
+def create_filters(df, # NOTE THIS IS THE FILTERED DATAFRAME
+                   exploded_dfs : list,
+                   columns : list ):
+    """
+    NOTE: we start from the filtered dataframe so that we get ONLY the values that are present in the filtered dataframe
+    and not all the values in the original dataframe
+    Create filters for the dataframe based on the columns provided.
+    Args:
+        df (pd.DataFrame): The dataframe to filter.
+        exploded_dfs (list): The exploded dataframes for the columns to filter.
+        columns (list): The columns to create filters for.
+    Returns:
+        dict: A dictionary containing the selected filters for each column.
+    """
+
+
+    # Create a dictionary to store the unique values for each column
+    [contrat_unite,
+    contrat_codestructure,
+    contrat_acteur,
+    contrat_typeacteur] = exploded_dfs
+
+    # values to display in the multiselect
+    keys={
+        "Intitule structure": contrat_unite["Intitule structure"].unique().tolist(),
+        "Acteurs::Dénomination": contrat_acteur["Acteurs::Dénomination"].unique().tolist(),
+        "Code structure": contrat_codestructure["Code structure"].unique().tolist(),
+        "Acteurs::Type": contrat_typeacteur["Acteurs::Type"].unique().tolist()
+    } 
+
     filters = {}
     for column in columns:
         column_to_display = switch_dict_spelling[column] if column in switch_dict_spelling.keys() else column
@@ -64,6 +103,8 @@ def create_filters(df,
                 selected_values = st.multiselect(column_to_display, keys["Intitule structure"],key="")
             elif    column=="Acteurs::Dénomination": 
                 selected_values = st.multiselect(column_to_display, keys["Acteurs::Dénomination"],key="")
+            elif    column=="Code structure":
+                selected_values = st.multiselect(column_to_display, keys["Code structure"],key="")
             elif    column=="Acteurs::Type": 
                 selected_values = st.multiselect(column_to_display, keys["Acteurs::Type"],key="")
             else:
@@ -137,26 +178,55 @@ def convert_datatime(date_str):
     except ValueError:
         return pd.NaT
 
+# when a function is deterministic (always gives the same result for the same input), and you want Streamlit to remember its result.
+@st.cache_data
 def preprocess(df):
-        df.fillna("Introuvalble", inplace=True)
+        
+        for col in df.select_dtypes(include='object').columns:
+            df[col] = df[col].fillna("Introuvalble")
+
+
         df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y") # convert date columns to datetime
         df["Date Premier Contact"] = df["Date Premier Contact"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
+        df["Date Signature"] = df["Date Signature"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
         df["Date de l'action"] = df["Date de l'action"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
 
         pd.to_datetime(df["Date Premier Contact"], format="%d/%m/%Y") # convert date columns to datetime
         	    
         df["Year"] = df["Date Création"].dt.year.astype(int)
         df["Pays"] = df["Financeurs::Pays"].map( lambda x : x.strip().upper() )
-        df["Pays"] = df["Pays"].map( lambda x : switch_dict_country[x] if x in switch_dict_country.keys() else x  )
 
-def separate(df,column_to_explode):
-    # Normalize: Convert into a separate table
-
-    contract_actors = df[['Numero contrat', column_to_explode]].copy()
-    contract_actors[column_to_explode] = contract_actors[column_to_explode].str.split(' // ')
-    contract_actors = contract_actors.explode(column_to_explode)
-    contract_actors[column_to_explode] = contract_actors[column_to_explode].str.strip()
-
-    
-    return contract_actors
         
+# when a function is deterministic (always gives the same result for the same input), and you want Streamlit to remember its result.
+@st.cache_data
+def plot_grouped_bar(df, group_col, value_col, title="", xlabel=None, ylabel=None):
+    grouped_df = df.groupby(group_col)[value_col].mean().reset_index()
+    
+    chart = alt.Chart(grouped_df).mark_bar().encode(
+        x=alt.X(f"{group_col}:N", title=xlabel or group_col),
+        y=alt.Y(f"{value_col}:Q", title=ylabel or value_col),
+        color=alt.Color(f"{group_col}:N"),  # 👈 remove legend
+        tooltip=[f"{group_col}:N", f"{value_col}:Q"]
+    ).properties(
+        title=title
+    )
+
+    return chart
+
+# when a function is deterministic (always gives the same result for the same input), and you want Streamlit to remember its result.
+@st.cache_data
+def stacked_plot_grouped_bar(df, x_col, stack_col, value_col, title="", xlabel=None, ylabel=None):
+    # Group by both x_col and stack_col, and compute mean of value_col
+    grouped_df = df.groupby([x_col, stack_col])[value_col].mean().reset_index()
+
+    chart = alt.Chart(grouped_df).mark_bar().encode(
+        x=alt.X(f"{x_col}:N", title=xlabel or x_col),
+        y=alt.Y(f"{value_col}:Q", title=ylabel or value_col, stack='zero'),
+        color=alt.Color(f"{stack_col}:N", title=stack_col),
+        tooltip=[f"{x_col}:N", f"{stack_col}:N", f"{value_col}:Q"]
+    ).properties(
+        title=title
+    )
+
+    return chart
+    

@@ -2,6 +2,8 @@
 import matplotlib.pyplot as plt
 import plotly.express as px
 import altair as alt
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl.styles.stylesheet")
 from aux import *
 
 
@@ -31,63 +33,80 @@ if "possible_key_dict" not in st.session_state:
 
 if uploaded_file or True: # For testing purposes, set uploaded_file to True
     
-    df=read_excel("/Users/alichemkhi/Desktop/myProjects/InfoLab/datasym/extraction_contrats.xlsx")#(uploaded_file)
-
-    preprocess(df)
+    if "df" not in st.session_state:
+        st.session_state.df=read_excel("/Users/alichemkhi/Desktop/myProjects/InfoLab/datasym/extraction_contrats.xlsx")#(uploaded_file)
+        st.session_state.current_df_filtered = st.session_state.df
     
-    contrat_unite       =separate(df,column_to_explode = 'Intitule structure')
-    contrat_acteur      =separate(df,column_to_explode = 'Acteurs::Dénomination')
-    contrat_typeacteur  =separate(df,column_to_explode = 'Acteurs::Type')
+    df= st.session_state.df 
+    
+    # guarded by a catch data decorator 
+    preprocess(df) 
 
-    # Initialize possible_key_dict only if it's empty (first run)
-    #if "possible_key_dict" not in st.session_state or not st.session_state.possible_key_dict:
-    print("Initializing possible_key_dict")
-    st.session_state.possible_key_dict={
-        "Intitule structure": contrat_unite["Intitule structure"].unique().tolist(),
-        "Acteurs::Dénomination": contrat_acteur["Acteurs::Dénomination"].unique().tolist(),
-        "Acteurs::Type": contrat_typeacteur["Acteurs::Type"].unique().tolist()
-    } 
+    # save the original dataframe in session state
+    st.session_state["uploaded_file"] = True
+
+    # explode the dataframe in columns where there are multiple values separated by "//"
+    # NOTE: "Numero contrat" is the primary key (unique identifier) for the dataframe
+    exploded_all_dfs=[contrat_unite,
+    contrat_codestructure,
+    contrat_acteur,
+    contrat_typeacteur] =multi_separate(df,["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type"])
+
+    # set the exploded dataframes in session state first time
+    if "current_exploded_dfs" not in st.session_state:
+        st.session_state.current_exploded_dfs =exploded_all_dfs
 
 
     # Interactive filtering
     st.write("### Filtres ")
-    
-    filters=create_filters(df,
-                          keys=st.session_state.possible_key_dict,
-                          columns=columns)
-
-    df_filtered = df
+    # To create new filters, All we need is current filtered dataframe
+    filters=create_filters(df, # TODO: we need to pass the filtered dataframe
+                           exploded_dfs=exploded_all_dfs, #st.session_state.current_exploded_dfs,
+                           columns=columns)
+    print(filters)
+    #NOTE: Now that we have the filters, we can apply them to the original dataframe
+    df_filtered = df.copy() 
+    # Initialize filtered contract-X dataframes
     contrat_unite_filtered = contrat_unite
+    contrat_codestructure_filtered = contrat_codestructure
     contrat_acteur_filtered = contrat_acteur
     contrat_typeacteur_filtered = contrat_typeacteur
-
-
+    # Apply filters to the dataframe
     for column, filter_value in filters.items():
         if isinstance(filter_value, list):
            
             contracts_to_keep= []
             if column == "Intitule structure":
-                contrat_unite_filtered = contrat_unite_filtered[contrat_unite_filtered[column].isin(filter_value)]
-                contracts_to_keep = contrat_unite_filtered["Numero contrat"].unique()
-                df_filtered = df_filtered[df_filtered["Numero contrat"].isin(contrat_unite_filtered["Numero contrat"])]
+                filtered_items = contrat_unite[contrat_unite[column].isin(filter_value)]
+                contracts_to_keep = filtered_items["Numero contrat"].unique()
+                df_filtered = df_filtered[df_filtered["Numero contrat"].isin(filtered_items["Numero contrat"])]
             elif column == "Acteurs::Dénomination":
-                contrat_acteur_filtered = contrat_acteur_filtered[contrat_acteur_filtered[column].isin(filter_value)]
-                contracts_to_keep = contrat_acteur_filtered["Numero contrat"].unique()
-                df_filtered = df_filtered[df_filtered["Numero contrat"].isin(contrat_acteur_filtered["Numero contrat"])]
+                filtered_items = contrat_acteur[contrat_acteur[column].isin(filter_value)]
+                contracts_to_keep = filtered_items["Numero contrat"].unique()
+                df_filtered = df_filtered[df_filtered["Numero contrat"].isin(filtered_items["Numero contrat"])]
             elif column == "Acteurs::Type":
-                contrat_typeacteur_filtered = contrat_typeacteur_filtered[contrat_typeacteur_filtered[column].isin(filter_value)]
-                contracts_to_keep = contrat_typeacteur_filtered["Numero contrat"].unique()
-                df_filtered = df_filtered[df_filtered["Numero contrat"].isin(contrat_typeacteur_filtered["Numero contrat"])]
+                filtered_items = contrat_typeacteur[contrat_typeacteur[column].isin(filter_value)]
+                contracts_to_keep = filtered_items["Numero contrat"].unique()
+                df_filtered = df_filtered[df_filtered["Numero contrat"].isin(filtered_items["Numero contrat"])]
+            elif column == "Code structure":
+                filtered_items = contrat_codestructure[contrat_codestructure[column].isin(filter_value)]
+                contracts_to_keep = filtered_items["Numero contrat"].unique()
+                df_filtered = df_filtered[df_filtered["Numero contrat"].isin(filtered_items["Numero contrat"])]
             else :    
                 df_filtered = df_filtered[df_filtered[column].isin(filter_value)]
 
         else:
             df_filtered = df_filtered[(df_filtered[column] >= filter_value[0]) & (df_filtered[column] <= filter_value[1])]
 
-    # regenerate the seperated dataframes from the filtered dataframe
-    contrat_unite_filtered       =separate(df_filtered,column_to_explode = 'Intitule structure')
-    contrat_acteur_filtered      =separate(df_filtered,column_to_explode = 'Acteurs::Dénomination')
-    contrat_typeacteur_filtered  =separate(df_filtered,column_to_explode = 'Acteurs::Type')
+    
+    st.session_state.current_df_filtered = df_filtered
+    
+    exploded_dfs = [contrat_unite_filtered,
+    contrat_codestructure_filtered,
+    contrat_acteur_filtered,
+    contrat_typeacteur_filtered]= multi_separate(df_filtered,["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type"])
+
+    st.session_state.current_exploded_dfs = exploded_dfs
 
 
     tab0_1, tab0_2 ,tab0_3= st.tabs(["Tous les contrats", "contrats par dénomination","contrats par type acteur"])
@@ -175,17 +194,7 @@ if uploaded_file or True: # For testing purposes, set uploaded_file to True
         
 
         st.write("---")
-    # ----------------------------------------------------
 
-    # Pie chart by country 
-    grouped_df = df_filtered["Pays"].value_counts().reset_index()
-    grouped_df.columns = ["Pays", "Count"]  # Rename columns
-
-    fig = px.pie(grouped_df, names="Pays", values="Count", 
-                title="Distribution par pays", 
-                hole=0.4,  # Makes it a donut chart (set to 0 for a full pie)
-                color_discrete_sequence=px.colors.qualitative.Set2)
-    st.plotly_chart(fig)
 
     
 

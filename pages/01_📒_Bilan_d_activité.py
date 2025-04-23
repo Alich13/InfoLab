@@ -61,7 +61,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     
     #----------------------------------------------------------------------------
     # Montant Global by aumoins_1_entreprise 
-    st.write("## Montant Global (euro)")
+    st.write("***Montant Global (€)***")
     df_montant_plot = df_use[df_use["Montant Global"] > 0]  # Filter out rows where Montant Global is 0 or negative
     chart_montant=plot_grouped_bar(df_montant_plot, "aumoins_1_entreprise", "Montant Global", title="", xlabel=None, ylabel=None)
     st.altair_chart(chart_montant, use_container_width=True)
@@ -69,7 +69,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
 
     #----------------------------------------------------------------------------
     # Durée by aumoins_1_entreprise 
-    st.write("## Durée (jours)")
+    st.write("***Durée (Jours)***")
     # Checkbox to filter out negative durations
     filter_negatives = st.checkbox("Filtrer les durées negatives", value=False)
     # Apply the filter if checkbox is checked

@@ -24,10 +24,10 @@ uploaded_file = st.file_uploader("Upload your Excel/CSV/TSV file", type=["xlsx",
 st.write("----")
 
 
-if uploaded_file or True: # For testing purposes, set uploaded_file to True
+if uploaded_file : # For testing purposes, set uploaded_file to True
     
     if "df" not in st.session_state:
-        st.session_state.df=read_excel("/Users/alichemkhi/Desktop/myProjects/InfoLab/datasym/extraction_contrats.xlsx")#(uploaded_file)
+        st.session_state.df=read_excel(uploaded_file)#(uploaded_file)
         st.session_state.current_df_filtered = st.session_state.df
     
     df= st.session_state.df 

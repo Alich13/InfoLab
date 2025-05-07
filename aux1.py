@@ -190,6 +190,7 @@ def preprocess(df):
         df["Date Premier Contact"] = df["Date Premier Contact"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
         df["Date Signature"] = df["Date Signature"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
         df["Date de l'action"] = df["Date de l'action"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
+        df["Phase"] = df.apply(lambda x : "Abandonné" if x["Action"] in ["Abandonné","Refusé"] else x["Phase"] , axis=1) 
 
         pd.to_datetime(df["Date Premier Contact"], format="%d/%m/%Y") # convert date columns to datetime
         	    

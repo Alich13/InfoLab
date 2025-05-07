@@ -123,19 +123,25 @@ if uploaded_file : # For testing purposes, set uploaded_file to True
     # ##################################### PLOTS ##########################################################
     # ----------------------------------------------------------------------------------------------------------#
 
-    occurences = df_filtered.groupby(["Outil du cadre","Phase"]).size().reset_index(name="Count")
-    tab1, tab2 = st.tabs(["📊 Outil du cadre ", "📋 Source Data"])
+    occurences_1 = df_filtered.groupby(["Type contrat","Phase"]).size().reset_index(name="Nombre")
+    occurences_2 = df_filtered.groupby(["Outil du cadre","Phase"]).size().reset_index(name="Nombre")
+    tab1, tab2 = st.tabs(["Type contrat","📊 Outil du cadre "])
     with tab1:
-        st.write("## Outil du cadre et Phase")
-        chart = alt.Chart(occurences).mark_bar().encode(
-            x=alt.X("Count:Q", title="Count"),
-            y=alt.Y("Outil du cadre:N", sort="-x", title="Outil du cadre"),
+        st.write("## Type contrat et Phase")
+        chart = alt.Chart(occurences_1).mark_bar().encode(
+            x=alt.X("Nombre:Q", title="Nombre"),
+            y=alt.Y("Type contrat:N", sort="-x", title="Type contrat"),
             color="Phase:N"
         ).properties(width=800, height=600)
         st.write(chart)
     with tab2:
-        st.write("## Source de données ")
-        st.dataframe(occurences)  # Display the table
+        st.write("## Outil du cadre et Phase")
+        chart = alt.Chart(occurences_2).mark_bar().encode(
+            x=alt.X("Nombre:Q", title="Nombre"),
+            y=alt.Y("Outil du cadre:N", sort="-x", title="Outil du cadre"),
+            color="Phase:N"
+        ).properties(width=800, height=600)
+        st.write(chart)
 
 
     st.write("---") # -----------------------------------------------------------------------------------------

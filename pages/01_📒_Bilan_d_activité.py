@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 import altair as alt
-from aux import *
+from aux1 import *
 
 import matplotlib.pyplot as plt
 
@@ -34,7 +34,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     selected_range = st.slider("Année", min_value, max_value, (2021, max_value))
 
     df_use = df[(df["Service"] == "DRV FSI développement") & 
-                     (df["Phase"].isin(["en gestion", "archivé"]))  & (df["Year"] > selected_range[0] ) & (df["Year"] < selected_range[1] ) ].copy()
+                     (df["Phase"].isin(["en gestion", "archivé"]))  & (df["Year"] >= selected_range[0] ) & (df["Year"] <= selected_range[1] ) ].copy()
 
     # Prepare data for use
     df_use = df_use[["Numero contrat", "Date Création", "Date Premier Contact", "Type projet",

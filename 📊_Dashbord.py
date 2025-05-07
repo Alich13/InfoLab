@@ -4,7 +4,7 @@ import plotly.express as px
 import altair as alt
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl.styles.stylesheet")
-from aux import *
+from aux1 import *
 
 
 """

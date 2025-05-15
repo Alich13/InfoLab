@@ -183,7 +183,7 @@ def convert_datatime(date_str):
 def preprocess(df):
         
         for col in df.select_dtypes(include='object').columns:
-            df[col] = df[col].fillna("Introuvalble")
+            df[col] = df[col].fillna("Introuvable")
 
 
         df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y") # convert date columns to datetime
@@ -191,7 +191,10 @@ def preprocess(df):
         df["Date Signature"] = df["Date Signature"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
         df["Date de l'action"] = df["Date de l'action"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
         df["Phase"] = df.apply(lambda x : "Abandonné" if x["Action"] in ["Abandonné","Refusé"] else x["Phase"] , axis=1) 
+        df["Outil du cadre"] = df.apply(lambda x : "Autres cadres" if x["Outil du cadre"] in ["Introuvable","Autres"] else x["Outil du cadre"] , axis=1) 
+        df["Financeurs::Sous-type"] = df.apply(lambda x : "Non spécifié" if x["Financeurs::Sous-type"] in ["Introuvable"] else x["Financeurs::Sous-type"] , axis=1) 
 
+         
         pd.to_datetime(df["Date Premier Contact"], format="%d/%m/%Y") # convert date columns to datetime
         	    
         df["Year"] = df["Date Création"].dt.year.astype(int)

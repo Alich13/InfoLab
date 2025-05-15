@@ -125,21 +125,53 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
     occurences_2 = df_filtered.groupby(["Outil du cadre","Phase"]).size().reset_index(name="Nombre")
     tab1, tab2 = st.tabs(["Type contrat","📊 Outil du cadre "])
     with tab1:
-        st.write("## Type contrat et Phase")
+        # Stacked bars with properly positioned labels
         chart = alt.Chart(occurences_1).mark_bar().encode(
-            x=alt.X("Nombre:Q", title="Nombre"),
+            x=alt.X("Nombre:Q", title="Nombre", stack="normalize"),  # or "zero"
             y=alt.Y("Type contrat:N", sort="-x", title="Type contrat"),
-            color="Phase:N"
+            color=alt.Color("Phase:N")
         ).properties(width=800, height=600)
-        st.write(chart)
+
+        text = alt.Chart(occurences_1).mark_text(
+            align='left',
+            baseline='middle',
+            dx=5,
+            fill='black'  # force text to be black
+        ).encode(
+            x=alt.X("Nombre:Q", stack="normalize"),  # match bar stack
+            y=alt.Y("Type contrat:N", sort="-x"),
+            text=alt.Text("Nombre:Q"),
+            color=alt.Color("Phase:N"),  # optional: color text like bar
+            detail="Phase:N"
+        )
+
+        st.write(chart + text)
+
+
+
     with tab2:
         st.write("## Outil du cadre et Phase")
         chart = alt.Chart(occurences_2).mark_bar().encode(
-            x=alt.X("Nombre:Q", title="Nombre"),
+            x=alt.X("Nombre:Q", title="Nombre",stack="normalize"),
             y=alt.Y("Outil du cadre:N", sort="-x", title="Outil du cadre"),
-            color="Phase:N"
+            color="Phase:N",
+            
         ).properties(width=800, height=600)
-        st.write(chart)
+
+        text = alt.Chart(occurences_2).mark_text(
+            align='left',
+            baseline='middle',
+            dx=5,
+            fill='black'  # force text to be black
+        ).encode(
+            x=alt.X("Nombre:Q", stack="normalize"),  # match bar stack
+            y=alt.Y("Outil du cadre:N", sort="-x"),
+            text=alt.Text("Nombre:Q"),
+            color=alt.Color("Phase:N"),  # optional: color text like bar
+            detail="Phase:N"
+        )
+
+        st.write(chart + text)
 
 
     st.write("---") # -----------------------------------------------------------------------------------------
@@ -160,11 +192,12 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
         grouped_df[new_name] = pd.Categorical(
             grouped_df[new_name], categories=grouped_df[new_name], ordered=True
         )
-        st.write(alt.Chart(grouped_df).mark_bar().encode(
-            x=alt.X(new_name, sort=None),
+        bar=alt.Chart(grouped_df).mark_bar().encode(
+            x=alt.X(new_name, sort=None , axis=alt.Axis(labelAngle=45)),
             y=alt.Y('Count:Q', sort="-x", title=y_axis_name),
             color=alt.Color(new_name, legend=None)  # Remove legend for simplicity
-        ))
+        )
+        st.write(bar)
 
     with tab3: # COUNT - HORIZONTAL
 
@@ -225,7 +258,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
     st.write("---") # -----------------------------------------------------------------------------------------
 
-    tab6,tab7 = st.tabs(["Financeurs::Soustype ","Financeurs::Soustype & Mantant Global moyen"])
+    tab6,tab7 = st.tabs(["Financeurs::Soustype ","Financeurs::Soustype & Montant Global moyen"])
 
 
     with tab6:
@@ -267,14 +300,14 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
         grouped_df = grouped_df.sort_values(by=y_axis_col, ascending=False)
 
         montant_chart_financeur_soutype = alt.Chart(grouped_df).mark_bar().encode(
-            x=alt.X("x_axis_col:N",sort="-y", title=x_axis_col),
+            x=alt.X("x_axis_col:N",sort="-y", title=x_axis_col , axis=alt.Axis(labelAngle=45)),
             y=alt.Y(f"{y_axis_col}:Q", title="Montant Global (€)"),
             color=alt.Color("x_axis_col:N", legend=None),  # 👈 remove legend,
             tooltip=["x_axis_col:N", "Montant Global:Q"]
         )
 
 
-        st.write("***Les zeros sont exclus !***")
+        st.write("Les contrats sans montant spécifié ne sont pas pris en compte.")
         st.write(montant_chart_financeur_soutype)
 
     

@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 
 st.header("Bilan d'activité")
 """
-Outil de bilan de l’activité plus générale
-NB : pour le traitement "bilan" se concentrait que sur les dossiers en phase « en gestion » et « archivé »
+Outil de bilan d'activité générale \n
+Pour les analyses ci-dessous on a uniquement les contrats « en gestion » et « archivé »
 """
 
 st.title("Tableau de bord") 
@@ -32,12 +32,41 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     min_value = df["Year"].min()  
     max_value = df["Year"].max()        
     selected_range = st.slider("Année", min_value, max_value, (2021, max_value))
+    
+    filters=create_filters(df, # TODO: we need to pass the filtered dataframe
+                           exploded_dfs=st.session_state.current_exploded_dfs, #st.session_state.current_exploded_dfs,
+                           columns=["Intitule structure","Code structure"])
+    print("Applied filters - bilan  =" ,filters)
 
+    
+    [contrat_unite,
+    contrat_codestructure,
+    contrat_acteur,
+    contrat_typeacteur]=st.session_state.current_exploded_dfs
+    
+    # Filter 
     df_use = df[(df["Service"] == "DRV FSI développement") & 
                      (df["Phase"].isin(["en gestion", "archivé"]))  & (df["Year"] >= selected_range[0] ) & (df["Year"] <= selected_range[1] ) ].copy()
 
+    for column, filter_value in filters.items():
+
+        if column == "Intitule structure":
+            filtered_items = contrat_unite[contrat_unite[column].isin(filter_value)]
+            contracts_to_keep = filtered_items["Numero contrat"].unique()
+            df_use = df_use[df_use["Numero contrat"].isin(filtered_items["Numero contrat"])]
+        elif column == "Code structure":
+            filtered_items = contrat_codestructure[contrat_codestructure[column].isin(filter_value)]
+            contracts_to_keep = filtered_items["Numero contrat"].unique()
+            df_use = df_use[df_use["Numero contrat"].isin(filtered_items["Numero contrat"])]
+        else :    
+            raise KeyError(" something wrong ")
+
+
+
+
+
     # Prepare data for use
-    df_use = df_use[["Numero contrat", "Date Création", "Date Premier Contact", "Type projet",
+    df_use = df_use[["Numero contrat", "Date Création", "Date Premier Contact", "Type projet","Intitule structure","Code structure",
                           "Acteurs::Type", "Phase", "Montant Global", "Date de l'action","Acteurs::Sous-type",'Financeurs::Type',
        'Financeurs::Sous-type', 'Financeurs::Classe',"Date Signature"]]
     
@@ -143,7 +172,8 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
 
 
     # Display the charts
-    st.write("***Pour la moyenne montant globale , on a filtré les lignes vides ! .***")
+    st.write("***Pour la moyenne montant global , Les contrats sans montant spécifié ne sont pas pris en compte ! .***")
+
     tab1, tab2 = st.tabs(["Financeur soustype", "Acteur soustype"])
     with tab1:
         st.altair_chart(montant_chart_financeur_soutype, use_container_width=True)

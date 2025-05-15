@@ -24,19 +24,17 @@ uploaded_file = st.file_uploader("Upload your Excel/CSV/TSV file", type=["xlsx",
 st.write("----")
 
 
-if uploaded_file : # For testing purposes, set uploaded_file to True
+if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["uploaded_file"]) : 
     
     if "df" not in st.session_state:
-        st.session_state.df=read_excel(uploaded_file)#(uploaded_file)
+        df=read_excel(uploaded_file)#(uploaded_file)
+        preprocess(df) 
+        st.session_state.df=df
         st.session_state.current_df_filtered = st.session_state.df
-    
-    df= st.session_state.df 
-    
-    # guarded by a catch data decorator 
-    preprocess(df) 
+        # save the original dataframe in session state
+        st.session_state["uploaded_file"] = True
 
-    # save the original dataframe in session state
-    st.session_state["uploaded_file"] = True
+    df= st.session_state.df 
 
     # explode the dataframe in columns where there are multiple values separated by "//"
     # NOTE: "Numero contrat" is the primary key (unique identifier) for the dataframe

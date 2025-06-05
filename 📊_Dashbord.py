@@ -127,51 +127,27 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
     with tab1:
         # Stacked bars with properly positioned labels
         chart = alt.Chart(occurences_1).mark_bar().encode(
-            x=alt.X("Nombre:Q", title="Nombre", stack="normalize"),  # or "zero"
+            x=alt.X("Nombre:Q", title="Nombre"),  # or "zero"
             y=alt.Y("Type contrat:N", sort="-x", title="Type contrat"),
             color=alt.Color("Phase:N")
         ).properties(width=800, height=600)
 
-        text = alt.Chart(occurences_1).mark_text(
-            align='left',
-            baseline='middle',
-            dx=5,
-            fill='black'  # force text to be black
-        ).encode(
-            x=alt.X("Nombre:Q", stack="normalize"),  # match bar stack
-            y=alt.Y("Type contrat:N", sort="-x"),
-            text=alt.Text("Nombre:Q"),
-            color=alt.Color("Phase:N"),  # optional: color text like bar
-            detail="Phase:N"
-        )
-
-        st.write(chart + text)
+        st.write(chart)
+        st.write("### Données", occurences_1)
 
 
 
     with tab2:
         st.write("## Outil du cadre et Phase")
         chart = alt.Chart(occurences_2).mark_bar().encode(
-            x=alt.X("Nombre:Q", title="Nombre",stack="normalize"),
+            x=alt.X("Nombre:Q", title="Nombre"),
             y=alt.Y("Outil du cadre:N", sort="-x", title="Outil du cadre"),
             color="Phase:N",
             
         ).properties(width=800, height=600)
 
-        text = alt.Chart(occurences_2).mark_text(
-            align='left',
-            baseline='middle',
-            dx=5,
-            fill='black'  # force text to be black
-        ).encode(
-            x=alt.X("Nombre:Q", stack="normalize"),  # match bar stack
-            y=alt.Y("Outil du cadre:N", sort="-x"),
-            text=alt.Text("Nombre:Q"),
-            color=alt.Color("Phase:N"),  # optional: color text like bar
-            detail="Phase:N"
-        )
-
-        st.write(chart + text)
+        st.write(chart)
+        st.write("### Données", occurences_2)
 
 
     st.write("---") # -----------------------------------------------------------------------------------------
@@ -194,7 +170,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
         )
         bar=alt.Chart(grouped_df).mark_bar().encode(
             x=alt.X(new_name, sort=None , axis=alt.Axis(labelAngle=45)),
-            y=alt.Y('Count:Q', sort="-x", title=y_axis_name),
+            y=alt.Y('Count:Q', sort="-x", title=y_axis_name , axis=alt.Axis(format='d')),
             color=alt.Color(new_name, legend=None)  # Remove legend for simplicity
         )
         st.write(bar)
@@ -211,7 +187,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
         grouped_df3.columns = [y_axis_col, "Count"]
         # Create the Altair bar chart
         chart = alt.Chart(grouped_df3).mark_bar().encode(
-            x=alt.X("Count:Q", title="Nombre de contrats"),
+            x=alt.X("Count:Q", title="Nombre de contrats",axis=alt.Axis(format='d')),
             y=alt.Y(f"{y_axis_col}:N", sort="-x", title=y_axis_name),  # Ensures correct sorting
             color=alt.Color(f"{y_axis_col}:N", legend=None)  # Remove legend for simplicity
         ).properties(width=1000, height=600)  # Adjust plot size

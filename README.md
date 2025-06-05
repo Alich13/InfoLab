@@ -6,7 +6,7 @@ InfoLab est un tableau de bord interactif développé avec Streamlit pour le sui
 
 ### Fonctionnalités Principales
 
-- **Upload du fichier d'extraction InfoLab** : Support des formats Excel (.xlsx), CSV et TSV
+- **Upload du fichier d'extraction (Infolab)** : Support des formats Excel (.xlsx), CSV et TSV
 - **Filtrage interactif** : Filtres dynamiques par structure, acteurs, type de contrat, etc.
 - **Visualisations avancées** : Graphiques interactifs avec Altair et Plotly
 - **Interface intuitive** : Interface web responsive et conviviale
@@ -36,6 +36,8 @@ InfoLab est un tableau de bord interactif développé avec Streamlit pour le sui
    conda activate streamlit-env
    ```
 
+
+
 ## 📋 Dépendances Principales
 
 - **Streamlit** (1.42.0) - Framework web pour l'application
@@ -53,15 +55,6 @@ L'application effectue plusieurs étapes de préprocessing automatique pour opti
 ### Gestion des Valeurs Manquantes
 - Toutes les colonnes textuelles avec des valeurs manquantes sont remplacées par `"Introuvable"`
 - Les dates invalides sont converties en `NaT` (Not a Time)
-
-### Conversion des Dates
-- **Format attendu** : `DD/MM/YYYY`
-- **Colonnes traitées** :
-  - `Date Création` → conversion en datetime
-  - `Date Premier Contact` → conversion en datetime
-  - `Date Signature` → conversion en datetime  
-  - `Date de l'action` → conversion en datetime
-- **Création automatique** : colonne `Year` extraite de `Date Création`
 
 ### Normalisation des Valeurs Catégorielles
 
@@ -89,18 +82,13 @@ L'application modifie l'affichage de certains noms de colonnes pour améliorer l
 | Nom Technique | Nom Affiché |
 |---------------|-------------|
 | `Intitule structure` | **Unité** |
-| `Contact princpal DR&I` | **Contact principal DR&I** |
+| `Contact principal DR&I` | **Contact principal DR&I** |
 | `Year` | **Année** |
 | `Type contrat` | **Type de contrat** |
 | `Acteurs::Dénomination` | **Dénomination d'acteurs** |
 | `Acteurs::Type` | **Type d'acteurs** |
 
-### Valeurs par Défaut des Filtres
 
-L'application applique des filtres par défaut pour faciliter l'analyse :
-- **Service** : `"DRV FSI développement"`
-- **Outil du cadre** : `["CIFRE", "CDDP"]`
-- **Année** : À partir de 2020
 
 ## 🎯 Utilisation
 
@@ -110,11 +98,11 @@ L'application applique des filtres par défaut pour faciliter l'analyse :
 streamlit run 📊_Dashbord.py
 ```
 
-L'application sera accessible à l'adresse indiquée sur la terminale . 
+L'application sera accessible à l'adresse indiquée dans le terminal.
 
 ### Exemple d'Utilisation
 
-1. **Upload des Données d'extraction InfoLab**
+1. **Upload des Données**
    - Cliquez sur "Upload your Excel/CSV/TSV file"
    - Sélectionnez votre fichier de données (formats supportés : .xlsx, .csv, .tsv)
 
@@ -125,7 +113,7 @@ L'application sera accessible à l'adresse indiquée sur la terminale .
 3. **Exploration des Visualisations**
    - Consultez les différents onglets pour explorer vos données
    - Analysez les distributions par type de contrat, structure, acteurs
-   - Examinez les montants par financeur
+
 
 ### Format des Données Attendu
 
@@ -148,6 +136,7 @@ InfoLab/
 ├── 00_explore.ipynb        # Notebook d'exploration des données
 ├── app_test.py             # Application de test
 ├── environment.yml         # Configuration de l'environnement Conda
+├── LICENSE                 # Licence Academic Use
 ├── datasym/                # Lien symbolique vers les données
 ├── pages/                  # Pages additionnelles Streamlit
 └── README.md              # Ce fichier
@@ -171,6 +160,44 @@ InfoLab/
 - **Cache intelligent** : Optimisation des performances avec `@st.cache_data`
 
 
+## 👨‍💻 Auteur
 
+**Ali Chemkhi** - Contributeur principal et développeur
+- GitHub: [@alichemkhi](https://github.com/alichemkhi)
+
+## 📄 Licence
+
+Ce projet est sous licence Academic Use License - voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+**Licence d'Usage Académique**
+
+Ce logiciel est destiné exclusivement à un usage académique, éducatif et de recherche. L'utilisation commerciale est interdite sans autorisation écrite explicite de l'auteur.
+
+```
+Academic Use License
+
+Copyright (c) 2025 Ali Chemkhi
+
+Permission is hereby granted to academic institutions and their members to use, 
+copy, modify, and distribute this software for academic, educational, and 
+research purposes only, subject to the following conditions:
+
+1. This software may only be used for non-commercial academic purposes
+2. Any modifications or derivatives must retain this license
+3. The software is provided "as-is" without warranty
+4. Data processed by this software remains confidential to the institution
+5. Commercial use requires explicit written permission from the author
+6. Redistribution must include this license notice
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
 
 Développé pour le suivi d'activité des laboratoires de recherche et l'aide au développement de projets scientifiques.

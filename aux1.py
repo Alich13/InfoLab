@@ -276,3 +276,53 @@ def horizontal_alt_plot(grouped_df, y_axis_col, y_axis_name, x_axis_name):
     )
     
     return chart
+
+@st.cache_data
+def vertical_alt_plot(grouped_df, x_axis_col, y_axis_name="Nombre de contrats"):
+    """
+    Create a vertical bar chart with all x-axis labels visible.
+    
+    Args:
+        grouped_df: DataFrame with columns [x_axis_col, "Count"]
+        x_axis_col: Name of the column for x-axis categories
+        y_axis_name: Display name for y-axis
+    
+    Returns:
+        Altair chart object
+    """
+    # Sort by Count in descending order
+    grouped_df = grouped_df.sort_values(by="Count", ascending=False)
+    
+    # Convert category column to ordered categorical type to preserve sorting
+    grouped_df[x_axis_col] = pd.Categorical(
+        grouped_df[x_axis_col], categories=grouped_df[x_axis_col], ordered=True
+    )
+    
+    # Calculate dynamic width based on number of unique values
+    num_categories = len(grouped_df)
+    chart_width = max(800, num_categories * 50)  # Minimum 800px, or 50px per category
+    
+    # Create the Altair bar chart
+    chart = alt.Chart(grouped_df).mark_bar().encode(
+        x=alt.X(f"{x_axis_col}:N", sort=None, title="",
+                axis=alt.Axis(
+                    labelAngle=45,
+                    labelLimit=0,  # No limit on label length
+                    labelOverlap=False,  # Don't allow label overlap
+                    labelSeparation=5,  # Minimum separation between labels
+                    titlePadding=10  # Add padding for title
+                )),
+        y=alt.Y("Count:Q", title=y_axis_name, axis=alt.Axis(format='d')),
+        color=alt.Color(f"{x_axis_col}:N", legend=None)  # Remove legend for simplicity
+    ).properties(
+        width=chart_width,
+        height=600,
+        autosize=alt.AutoSizeParams(
+            type='fit',
+            contains='padding'
+        )
+    ).resolve_scale(
+        x='independent'  # Ensure x-axis scaling is independent
+    )
+    
+    return chart

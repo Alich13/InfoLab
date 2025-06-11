@@ -156,24 +156,16 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
     with tab2:  # COUNT - VERTICAL
         column_name = "Acteurs::Dénomination"
-        new_name="nom_acteur"
+        new_name = "nom_acteur"
         y_axis_name = "Nombre de contrats"
 
         # group and count occurrences
         grouped_df = contrat_acteur_filtered[column_name].value_counts().reset_index(name="Count")
         grouped_df.columns = [new_name, "Count"]
-        # Sort by Count in descending order
-        grouped_df = grouped_df.sort_values(by="Count", ascending=False)
-        # Convert category column to ordered categorical type to preserve sorting
-        grouped_df[new_name] = pd.Categorical(
-            grouped_df[new_name], categories=grouped_df[new_name], ordered=True
-        )
-        bar=alt.Chart(grouped_df).mark_bar().encode(
-            x=alt.X(new_name, sort=None , axis=alt.Axis(labelAngle=45)),
-            y=alt.Y('Count:Q', sort="-x", title=y_axis_name , axis=alt.Axis(format='d')),
-            color=alt.Color(new_name, legend=None)  # Remove legend for simplicity
-        )
-        st.write(bar)
+        
+        # Use the vertical plot function from aux1.py
+        chart = vertical_alt_plot(grouped_df, new_name, y_axis_name)
+        st.write(chart)
 
     with tab3: # COUNT - HORIZONTAL
 
@@ -273,6 +265,6 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
         st.write("Les contrats sans montant spécifié ne sont pas pris en compte.")
         st.write(montant_chart_financeur_soutype)
 
-    
+
 
 

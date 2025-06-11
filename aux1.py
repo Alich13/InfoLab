@@ -40,11 +40,11 @@ def read_excel(uploaded_file):
 
 
 
-def separate(df,column_to_explode):
+def separate(df,column_to_explode,sep=" // "):
     # Normalize: Convert into a separate table
 
     contract_actors = df[['Numero contrat', column_to_explode]].copy()
-    contract_actors[column_to_explode] = contract_actors[column_to_explode].str.split(' // ')
+    contract_actors[column_to_explode] = contract_actors[column_to_explode].str.split(sep)  # Split the column into lists
     contract_actors = contract_actors.explode(column_to_explode)
     contract_actors[column_to_explode] = contract_actors[column_to_explode].str.strip()
 

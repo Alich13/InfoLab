@@ -94,6 +94,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
     contrat_codestructure_filtered,
     contrat_acteur_filtered,
     contrat_typeacteur_filtered]= multi_separate(df_filtered,["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type"])
+    contrat_RS_filtered=separate(df_filtered,"Contacts Structure",sep=",") # RS = responsable structure
 
     st.session_state.current_exploded_dfs = exploded_filtered_dfs
 
@@ -183,7 +184,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
 
         # Group and count occurrences
-        grouped_df3 = df_filtered[y_axis_col].value_counts().reset_index()
+        grouped_df3 = contrat_RS_filtered[y_axis_col].value_counts().reset_index()
         grouped_df3.columns = [y_axis_col, "Count"]
         # Create the Altair bar chart
         chart = alt.Chart(grouped_df3).mark_bar().encode(

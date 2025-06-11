@@ -233,4 +233,46 @@ def stacked_plot_grouped_bar(df, x_col, stack_col, value_col, title="", xlabel=N
     )
 
     return chart
+
+# when a function is deterministic (always gives the same result for the same input), and you want Streamlit to remember its result.
+@st.cache_data
+def horizontal_alt_plot(grouped_df, y_axis_col, y_axis_name, x_axis_name):
+    """
+    Create a horizontal bar chart with all y-axis labels visible.
     
+    Args:
+        grouped_df: DataFrame with columns [y_axis_col, "Count"]
+        y_axis_col: Name of the column for y-axis categories
+        y_axis_name: Display name for y-axis
+        x_axis_name: Display name for x-axis
+    
+    Returns:
+        Altair chart object
+    """
+    # Calculate dynamic height based on number of unique values
+    num_categories = len(grouped_df)
+    chart_height = max(600, num_categories * 35)  # Increased spacing per category
+    
+    # Create the Altair bar chart
+    chart = alt.Chart(grouped_df).mark_bar().encode(
+        x=alt.X("Count:Q", title=x_axis_name, axis=alt.Axis(format='d')),
+        y=alt.Y(f"{y_axis_col}:N", sort="-x", title=y_axis_name, 
+                axis=alt.Axis(
+                    labelLimit=0,  # No limit on label length
+                    labelOverlap=False,  # Don't allow label overlap
+                    labelSeparation=5,  # Minimum separation between labels
+                    titlePadding=10  # Add padding for title
+                )),
+        color=alt.Color(f"{y_axis_col}:N", legend=None)  # Remove legend for simplicity
+    ).properties(
+        width=1000, 
+        height=chart_height,
+        autosize=alt.AutoSizeParams(
+            type='fit',
+            contains='padding'
+        )
+    ).resolve_scale(
+        y='independent'  # Ensure y-axis scaling is independent
+    )
+    
+    return chart

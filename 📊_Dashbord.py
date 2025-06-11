@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import plotly.express as px
 import altair as alt
@@ -178,57 +177,44 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
     with tab3: # COUNT - HORIZONTAL
 
-        y_axis_col = "Contacts Structure"
+        y_axis_original_col = "Contacts Structure"
         y_axis_name = "Contacts Structure"
         x_axis_name = "Nombre de contrats"
 
-
         # Group and count occurrences
-        grouped_df3 = contrat_RS_filtered[y_axis_col].value_counts().reset_index()
-        grouped_df3.columns = [y_axis_col, "Count"]
-        # Create the Altair bar chart
-        chart = alt.Chart(grouped_df3).mark_bar().encode(
-            x=alt.X("Count:Q", title="Nombre de contrats",axis=alt.Axis(format='d')),
-            y=alt.Y(f"{y_axis_col}:N", sort="-x", title=y_axis_name),  # Ensures correct sorting
-            color=alt.Color(f"{y_axis_col}:N", legend=None)  # Remove legend for simplicity
-        ).properties(width=1000, height=600)  # Adjust plot size
-
+        grouped_df3 = contrat_RS_filtered[y_axis_original_col].value_counts().reset_index()
+        grouped_df3.columns = [y_axis_name, "Count"]
+        
+        # Use the horizontal plot function from aux1.py
+        chart = horizontal_alt_plot(grouped_df3, y_axis_name, y_axis_name, x_axis_name)
         st.write(chart)
 
     with tab4: # COUNT - HORIZONTAL
 
-        y_axis_col = "Acteurs::Type"
+        y_axis_original_col = "Acteurs::Type"
         y_axis_name = "type"
         x_axis_name = "Nombre de contrats"
 
         # Group and count occurrences for "Acteurs::Type"
-        grouped_df4 = contrat_typeacteur_filtered["Acteurs::Type"].value_counts().reset_index()
+        grouped_df4 = contrat_typeacteur_filtered[y_axis_original_col].value_counts().reset_index()
         grouped_df4.columns = [y_axis_name, "Count"] 
-        # Create the Altair bar chart
-        chart = alt.Chart(grouped_df4).mark_bar().encode(
-            x=alt.X("Count:Q", title=x_axis_name),
-            y=alt.Y(f"{y_axis_name}:N", sort="-x", title="type"),  # Ensures correct sorting
-            color=alt.Color(f"{y_axis_name}:N", legend=None)       # Remove legend for simplicity
-        ).properties(width=1000, height=600)  # Adjust plot size
-
+        
+        # Use the horizontal plot function from aux1.py
+        chart = horizontal_alt_plot(grouped_df4, y_axis_name, y_axis_name, x_axis_name)
         st.write(chart)
 
     with tab5: # COUNT - HORIZONTAL
         
-        y_axis_col = "Type contrat"
+        y_axis_original_col = "Type contrat"
         y_axis_name = "Type contrat"
         x_axis_name = "Nombre de contrats"
+        
         # Group and count occurrences
-        grouped_df3 = df_filtered[y_axis_col].value_counts().reset_index()
-        grouped_df3.columns = [y_axis_col, "Count"]
+        grouped_df5 = df_filtered[y_axis_original_col].value_counts().reset_index()
+        grouped_df5.columns = [y_axis_name, "Count"]
 
-        # Create the Altair bar chart
-        chart = alt.Chart(grouped_df3).mark_bar().encode(
-            x=alt.X("Count:Q", title=y_axis_name),
-            y=alt.Y(f"{y_axis_col}:N", sort="-x", title=x_axis_name),  # Ensures correct sorting
-            color=alt.Color(f"{y_axis_col}:N", legend=None)  # Remove legend for simplicity
-        ).properties(width=1000, height=600)  # Adjust plot size
-
+        # Use the horizontal plot function from aux1.py
+        chart = horizontal_alt_plot(grouped_df5, y_axis_name, y_axis_name, x_axis_name)
         st.write(chart)
 
 

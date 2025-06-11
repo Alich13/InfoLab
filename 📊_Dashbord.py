@@ -43,7 +43,6 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
     contrat_typeacteur] =multi_separate(df,["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type"])
 
     # set the exploded dataframes in session state first time
-    # TODO :  this is not needed for now , but we might need it for automatic filtering mult-selection
     if "current_exploded_dfs" not in st.session_state:
         st.session_state.current_exploded_dfs =exploded_all_dfs
 
@@ -95,7 +94,6 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
     contrat_typeacteur_filtered]= multi_separate(df_filtered,["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type"])
     contrat_RS_filtered=separate(df_filtered,"Contacts Structure",sep=",") # RS = responsable structure
 
-    st.session_state.current_exploded_dfs = exploded_filtered_dfs
 
 
     # ----------------------------------------------------------------------------------------------------------#

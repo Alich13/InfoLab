@@ -234,8 +234,13 @@ def clear_cache_on_new_upload(uploaded_file):
 
 # when a function is deterministic (always gives the same result for the same input), and you want Streamlit to remember its result.
 @st.cache_data
-def plot_grouped_bar(df, group_col, value_col, title="", xlabel=None, ylabel=None):
-    grouped_df = df.groupby(group_col)[value_col].mean().reset_index()
+def plot_grouped_bar(df, group_col, value_col, title="", xlabel=None, ylabel=None,group_function='sum'):
+    if group_function not in ['sum', 'mean']:
+        raise ValueError("group_function must be either 'sum' or 'mean'")
+    if group_function == 'mean':
+        grouped_df = df.groupby(group_col)[value_col].mean().reset_index()
+    else:  # 'sum'
+        grouped_df = df.groupby(group_col)[value_col].sum().reset_index()
     
     chart = alt.Chart(grouped_df).mark_bar().encode(
         x=alt.X(f"{group_col}:N", title=xlabel or group_col),
@@ -252,7 +257,7 @@ def plot_grouped_bar(df, group_col, value_col, title="", xlabel=None, ylabel=Non
 @st.cache_data
 def stacked_plot_grouped_bar(df, x_col, stack_col, value_col, title="", xlabel=None, ylabel=None):
     # Group by both x_col and stack_col, and compute mean of value_col
-    grouped_df = df.groupby([x_col, stack_col])[value_col].mean().reset_index()
+    grouped_df = df.groupby([x_col, stack_col])[value_col].sum().reset_index()
 
     chart = alt.Chart(grouped_df).mark_bar().encode(
         x=alt.X(f"{x_col}:N", title=xlabel or x_col),

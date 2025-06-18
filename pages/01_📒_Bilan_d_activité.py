@@ -83,6 +83,11 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     df_use["type_acteur_plot"] = df_use.apply(
         lambda x: "Commission européenne" if "Commission européenne" in str(x["Acteurs::Sous-type"])  else x["type_acteur_plot"], axis=1
     )
+
+    df_use["Financeurs::Sous-type"] = df_use["Financeurs::Sous-type"].str.replace("Agences", "ANR", regex=False) 
+    #ANR
+
+    
     
     
     # display table

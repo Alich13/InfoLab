@@ -76,9 +76,14 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     df_use["duree"] = df_use["duree"].fillna(-1)
     # make sure duree is int
     df_use["duree"] = df_use["duree"].astype(int)
-    df_use["aumoins_1_entreprise"] = df_use["Acteurs::Type"].str.contains("Entreprises", na=False)
-    df_use["aumoins_1_entreprise"] = df_use["aumoins_1_entreprise"].replace({True: "Au moins 1 entreprise", False: "Pas d'entreprise"})
-
+    df_use["type_acteur_plot"] = df_use.apply(
+        lambda x: "entreprise" if "Entreprises" in str(x["Acteurs::Type"]) else "autres", axis=1
+    )
+    df_use["type_acteur_plot"] = df_use.apply(
+        lambda x: "Commission européenne" if "Commission européenne" in str(x["Acteurs::Sous-type"])  else x["type_acteur_plot"], axis=1
+    )
+    
+    
     # display table
     st.write("### Data Table")
     st.dataframe(df_use)
@@ -89,25 +94,25 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     # ----------------------------------------------------------------------------------------------------------#
     
     #----------------------------------------------------------------------------
-    # Montant Global by aumoins_1_entreprise 
-    st.write("***Montant Global (€)***")
+    # Montant Global by type_acteur_plot 
+    st.write("***Somme Montants Globaux (€)***")
     df_montant_plot = df_use[df_use["Montant Global"] > 0]  # Filter out rows where Montant Global is 0 or negative
-    chart_montant=plot_grouped_bar(df_montant_plot, "aumoins_1_entreprise", "Montant Global", title="", xlabel=None, ylabel=None)
+    chart_montant=plot_grouped_bar(df_montant_plot, "type_acteur_plot", "Montant Global", title="", xlabel=None, ylabel=None)
     st.altair_chart(chart_montant, use_container_width=True)
 
 
     #----------------------------------------------------------------------------
-    # Durée by aumoins_1_entreprise 
+    # Durée by type_acteur_plot 
     st.write("***Durée (Jours)***")
     # Checkbox to filter out negative durations
     filter_negatives = st.checkbox("Filtrer les durées negatives", value=False)
     # Apply the filter if checkbox is checked
     if filter_negatives:
         filtered_df = df_use[df_use["duree"] >= 0]
-        chart=plot_grouped_bar(filtered_df, "aumoins_1_entreprise", "duree", title="", xlabel=None, ylabel=None)    
+        chart=plot_grouped_bar(filtered_df, "type_acteur_plot", "duree", title="", xlabel=None, ylabel=None,group_function='mean')    
     else:
         filtered_df = df_use
-        chart=plot_grouped_bar(filtered_df, "aumoins_1_entreprise", "duree", title="", xlabel=None, ylabel=None)
+        chart=plot_grouped_bar(filtered_df, "type_acteur_plot", "duree", title="", xlabel=None, ylabel=None,group_function='mean')
    
     
     tab1, tab2 = st.tabs(["📊 Bar Chart", "📋 Source Data"])
@@ -155,7 +160,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     # Filter out rows where Montant Global is 0 or negative
     df_montant_plot = sigle_merged[sigle_merged["Montant Global"] > 0]
 
-    grouped_df = df_montant_plot.groupby("x_axis_col")[y_axis_col].mean().reset_index()
+    grouped_df = df_montant_plot.groupby("x_axis_col")[y_axis_col].sum().reset_index()
     grouped_df = grouped_df.sort_values(by=y_axis_col, ascending=False)
 
     montant_chart_financeur_soutype = alt.Chart(grouped_df).mark_bar().encode(
@@ -166,10 +171,6 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     ).properties(
         title="montant global moyen"
     )
-
-    # stacked bar chart - too complicated and not informative - comment it for now
-    # chart_stacked=stacked_plot_grouped_bar(sigle_merged,  "aumoins_1_entreprise", "soustype", "duree", title=" Durée moyenne par type de financeur ", xlabel=None, ylabel=None)
-
 
     # Display the charts
     st.write("***Pour la moyenne montant global , Les contrats sans montant spécifié ne sont pas pris en compte ! .***")
@@ -187,9 +188,6 @@ else:
     st.write("***Merci de télécharger un fichier dans la page Dashbord ! .***")
     st.write("----")
 
-
-    
-    
 
 
 

@@ -213,32 +213,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
     st.write("---") # -----------------------------------------------------------------------------------------
 
-    tab6,tab7 = st.tabs(["Financeurs::Soustype ","Financeurs::Soustype & Montant Global moyen"])
-
-
-    with tab6:
-
-        # montant by Financeurs::Sous-type
-        x_axis_col = "Financeurs::Sous-type"
-        sigle=separate(df_filtered,column_to_explode = x_axis_col)
-        sigle_merged=sigle.merge(df_filtered, left_on="Numero contrat", right_on="Numero contrat", how="left")
-        sigle_merged = sigle_merged.rename(columns={f"{x_axis_col}_x": 'x_axis_col'})
-        
-        
-        # Group and count occurrences
-        grouped_df3 = sigle_merged['x_axis_col'].value_counts().reset_index()
-        grouped_df3.columns = ['x_axis_col', "Count"]
-
-        # Create the Altair bar chart
-        chart3 = alt.Chart(grouped_df3).mark_bar().encode(
-            x=alt.X("Count:Q", title="Nombre de contrats",axis=format_axis(grouped_df3,"Count",'d')),
-            y=alt.Y("x_axis_col:N", sort="-x", title=x_axis_col),  # Ensures correct sorting
-            color=alt.Color("x_axis_col:N", legend=None)  # Remove legend for simplicity
-        ).properties(width=1000, height=600)  # Adjust plot size
-
-
-        st.write(chart3)
-    
+    tab7, = st.tabs(["Financeurs::Soustype & Montant Global moyen"])  # Unpack the single tab
 
     with tab7:
         # montant by Financeurs::Sous-type
@@ -251,16 +226,15 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
         # Filter out rows where Montant Global is 0 or negative
         df_montant_plot = sigle_merged[sigle_merged["Montant Global"] > 0]
 
-        grouped_df = df_montant_plot.groupby("x_axis_col")[y_axis_col].mean().reset_index()
+        grouped_df = df_montant_plot.groupby("x_axis_col")[y_axis_col].sum().reset_index()
         grouped_df = grouped_df.sort_values(by=y_axis_col, ascending=False)
 
         montant_chart_financeur_soutype = alt.Chart(grouped_df).mark_bar().encode(
             x=alt.X("x_axis_col:N",sort="-y", title=x_axis_col , axis=alt.Axis(labelAngle=45)),
-            y=alt.Y(f"{y_axis_col}:Q", title="Montant Global (€)",axis=format_axis(grouped_df,y_axis_col,'d')),
+            y=alt.Y(f"{y_axis_col}:Q", title="Somme des Montants Globaux (€)",axis=format_axis(grouped_df,y_axis_col,'d')),
             color=alt.Color("x_axis_col:N", legend=None),  # 👈 remove legend,
             tooltip=["x_axis_col:N", "Montant Global:Q"]
         )
-
 
         st.write("Les contrats sans montant spécifié ne sont pas pris en compte.")
         st.write(montant_chart_financeur_soutype)

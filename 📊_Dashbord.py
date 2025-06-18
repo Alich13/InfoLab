@@ -125,7 +125,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
     with tab1:
         # Stacked bars with properly positioned labels
         chart = alt.Chart(occurences_1).mark_bar().encode(
-            x=alt.X("Nombre:Q", title="Nombre"),  # or "zero"
+            x=alt.X("Nombre:Q", title="Nombre", axis=format_axis(occurences_1,"Nombre",'d')), 
             y=alt.Y("Type contrat:N", sort="-x", title="Type contrat"),
             color=alt.Color("Phase:N")
         ).properties(width=800, height=600)
@@ -138,10 +138,9 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
     with tab2:
         st.write("## Outil du cadre et Phase")
         chart = alt.Chart(occurences_2).mark_bar().encode(
-            x=alt.X("Nombre:Q", title="Nombre"),
+            x=alt.X("Nombre:Q", title="Nombre",axis=format_axis(occurences_2,"Nombre",'d')),
             y=alt.Y("Outil du cadre:N", sort="-x", title="Outil du cadre"),
             color="Phase:N",
-            
         ).properties(width=800, height=600)
 
         st.write(chart)
@@ -229,7 +228,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
         # Create the Altair bar chart
         chart3 = alt.Chart(grouped_df3).mark_bar().encode(
-            x=alt.X("Count:Q", title="Nombre de contrats"),
+            x=alt.X("Count:Q", title="Nombre de contrats",axis=format_axis(grouped_df3,"Count",'d')),
             y=alt.Y("x_axis_col:N", sort="-x", title=x_axis_col),  # Ensures correct sorting
             color=alt.Color("x_axis_col:N", legend=None)  # Remove legend for simplicity
         ).properties(width=1000, height=600)  # Adjust plot size
@@ -254,7 +253,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
         montant_chart_financeur_soutype = alt.Chart(grouped_df).mark_bar().encode(
             x=alt.X("x_axis_col:N",sort="-y", title=x_axis_col , axis=alt.Axis(labelAngle=45)),
-            y=alt.Y(f"{y_axis_col}:Q", title="Montant Global (€)"),
+            y=alt.Y(f"{y_axis_col}:Q", title="Montant Global (€)",axis=format_axis(grouped_df,y_axis_col,'d')),
             color=alt.Color("x_axis_col:N", legend=None),  # 👈 remove legend,
             tooltip=["x_axis_col:N", "Montant Global:Q"]
         )

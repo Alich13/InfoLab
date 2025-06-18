@@ -39,6 +39,25 @@ def read_excel(uploaded_file):
     return df
 
 
+def format_axis(df,col,type)->alt.Axis:
+    """
+    Format the axis of a chart based on the column and type.
+    """
+    
+    assert(col in df.columns), f"Column '{col}' is not present in the DataFrame."
+    assert(~df.empty), "DataFrame is empty."
+        
+    
+    # Dynamically calculate tickCount based on the maximum value of "Nombre"
+    max_nombre = df[col].max()
+
+    if max_nombre < 10:
+        tick_count = 1
+        return alt.Axis(format=type, tickCount=tick_count)
+    else:
+        return alt.Axis(format=type) # automatically determines tickCount
+
+
 
 def separate(df,column_to_explode,sep=" // "):
     # Normalize: Convert into a separate table
@@ -255,7 +274,7 @@ def horizontal_alt_plot(grouped_df, y_axis_col, y_axis_name, x_axis_name):
     
     # Create the Altair bar chart
     chart = alt.Chart(grouped_df).mark_bar().encode(
-        x=alt.X("Count:Q", title=x_axis_name, axis=alt.Axis(format='d')),
+        x=alt.X("Count:Q", title=x_axis_name, axis=format_axis(grouped_df,"Count",'d')),
         y=alt.Y(f"{y_axis_col}:N", sort="-x", title=y_axis_name, 
                 axis=alt.Axis(
                     labelLimit=0,  # No limit on label length
@@ -312,7 +331,7 @@ def vertical_alt_plot(grouped_df, x_axis_col, y_axis_name="Nombre de contrats"):
                     labelSeparation=5,  # Minimum separation between labels
                     titlePadding=10  # Add padding for title
                 )),
-        y=alt.Y("Count:Q", title=y_axis_name, axis=alt.Axis(format='d')),
+        y=alt.Y("Count:Q", title=y_axis_name, axis=format_axis(grouped_df,"Count",'d')),
         color=alt.Color(f"{x_axis_col}:N", legend=None)  # Remove legend for simplicity
     ).properties(
         width=chart_width,

@@ -200,26 +200,38 @@ def convert_datatime(date_str):
 # when a function is deterministic (always gives the same result for the same input), and you want Streamlit to remember its result.
 @st.cache_data
 def preprocess(df):
+    """
+    Preprocess the DataFrame by cleaning and transforming columns.
+    """
         
-        for col in df.select_dtypes(include='object').columns:
-            df[col] = df[col].fillna("Introuvable")
+    for col in df.select_dtypes(include='object').columns:
+        df[col] = df[col].fillna("Introuvable")
 
 
-        df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y") # convert date columns to datetime
-        df["Date Premier Contact"] = df["Date Premier Contact"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
-        df["Date Signature"] = df["Date Signature"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
-        df["Date de l'action"] = df["Date de l'action"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
-        df["Phase"] = df.apply(lambda x : "Abandonné" if x["Action"] in ["Abandonné","Refusé"] else x["Phase"] , axis=1) 
-        df["Outil du cadre"] = df.apply(lambda x : "Autres cadres" if x["Outil du cadre"] in ["Introuvable","Autres"] else x["Outil du cadre"] , axis=1) 
-        df["Financeurs::Sous-type"] = df.apply(lambda x : "Non spécifié" if x["Financeurs::Sous-type"] in ["Introuvable"] else x["Financeurs::Sous-type"] , axis=1) 
-
-         
-        pd.to_datetime(df["Date Premier Contact"], format="%d/%m/%Y") # convert date columns to datetime
-        	    
-        df["Year"] = df["Date Création"].dt.year.astype(int)
-        df["Pays"] = df["Financeurs::Pays"].map( lambda x : x.strip().upper() )
+    df["Date Création"] = pd.to_datetime(df["Date Création"], format="%d/%m/%Y") # convert date columns to datetime
+    df["Date Premier Contact"] = df["Date Premier Contact"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
+    df["Date Signature"] = df["Date Signature"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
+    df["Date de l'action"] = df["Date de l'action"].map(lambda x : convert_datatime(x) ) # convert date columns to datetime
+    df["Phase"] = df.apply(lambda x : "Abandonné" if x["Action"] in ["Abandonné","Refusé"] else x["Phase"] , axis=1) 
+    df["Outil du cadre"] = df.apply(lambda x : "Autres cadres" if x["Outil du cadre"] in ["Introuvable","Autres"] else x["Outil du cadre"] , axis=1) 
+    df["Financeurs::Sous-type"] = df.apply(lambda x : "Non spécifié" if x["Financeurs::Sous-type"] in ["Introuvable"] else x["Financeurs::Sous-type"] , axis=1) 
 
         
+    pd.to_datetime(df["Date Premier Contact"], format="%d/%m/%Y") # convert date columns to datetime
+            
+    df["Year"] = df["Date Création"].dt.year.astype(int)
+    df["Pays"] = df["Financeurs::Pays"].map( lambda x : x.strip().upper() )
+    
+
+
+def clear_cache_on_new_upload(uploaded_file):
+    """
+    Clear Streamlit's cache if a new file is uploaded.
+    """
+    if "last_uploaded_file" not in st.session_state or st.session_state["last_uploaded_file"] != uploaded_file:
+        st.cache_data.clear()  # Clear the cache
+        st.session_state["last_uploaded_file"] = uploaded_file
+
 # when a function is deterministic (always gives the same result for the same input), and you want Streamlit to remember its result.
 @st.cache_data
 def plot_grouped_bar(df, group_col, value_col, title="", xlabel=None, ylabel=None):

@@ -25,6 +25,9 @@ st.write("----")
 
 if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["uploaded_file"]) : 
     
+    # Clear cache if a new file is uploaded
+    clear_cache_on_new_upload(uploaded_file)
+
     if "df" not in st.session_state:
         df=read_excel(uploaded_file)#(uploaded_file)
         preprocess(df) 

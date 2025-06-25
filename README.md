@@ -9,7 +9,6 @@ InfoLab est un tableau de bord interactif développé avec Streamlit pour le sui
 - **Upload du fichier d'extraction (Infolab)** : Support des formats Excel (.xlsx), CSV et TSV
 - **Filtrage interactif** : Filtres dynamiques par structure, acteurs, type de contrat, etc.
 - **Visualisations avancées** : Graphiques interactifs avec Altair et Plotly
-- **Interface intuitive** : Interface web responsive et conviviale
 
 ## 🚀 Installation
 
@@ -56,17 +55,11 @@ L'application effectue plusieurs étapes de préprocessing automatique pour opti
 - Toutes les colonnes textuelles avec des valeurs manquantes sont remplacées par `"Introuvable"`
 - Les dates invalides sont converties en `NaT` (Not a Time)
 
-### Normalisation des Valeurs Catégorielles
-
-#### Phase des Projets
+### Changement de certaines categories
 - Les projets avec `Action` = "Abandonné" ou "Refusé" → `Phase` = "Abandonné"
-
-#### Outils du Cadre
 - Les valeurs "Introuvable" ou "Autres" → "Autres cadres"
-
-#### Financeurs
 - `Financeurs::Sous-type` "Introuvable" → "Non spécifié"
-- `Financeurs::Pays` → normalisé en majuscules avec suppression des espaces
+- Dans l'onglet bilan dans `Financeurs::Sous-type`, `Agences` → `ANR`
 
 ### Explosion des Colonnes Multi-Valeurs
 Certaines colonnes contiennent des valeurs multiples séparées par `" // "`. L'application les sépare automatiquement :

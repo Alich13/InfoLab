@@ -11,7 +11,6 @@ from aux1 import *
 """
 
 # TODO: 
-# * Mitigate column names key errors (if the input file changes)
 # check if the column names are in the dataframe
 # streamlit run 📊_Dashbord.py
 
@@ -52,13 +51,12 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
     # Interactive filtering
     st.write("### Filtres ")
-
     # Create a list of columns to filter
-    # the exploded dataframes are used to display the filters values for the exploded columns (ones with multiple values separated by //)
-    filters=create_filters(df, # TODO: we need to pass the filtered dataframe
-                           exploded_dfs=exploded_all_dfs, #st.session_state.current_exploded_dfs,
+    # The exploded dataframes are used to display the filters values for the exploded columns (ones with multiple values separated by //)
+    filters=create_filters(df, 
+                           exploded_dfs=exploded_all_dfs, 
                            columns=columns)
-    print("Applied filters =" ,filters)
+    print("Applied filters =" ,filters) # printed to the console for debugging
 
     #Now that we have the filters, we can apply them to the original dataframe
     df_filtered = df.copy() 
@@ -84,11 +82,11 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
             else :    
                 df_filtered = df_filtered[df_filtered[column].isin(filter_value)]
 
-        else:
+        else: 
+            # datetime filtering
             df_filtered = df_filtered[(df_filtered[column] >= filter_value[0]) & (df_filtered[column] <= filter_value[1])]
 
-
-    # Save the filtered dataframe in session state    
+    # Save the filtered dataframe in session state
     st.session_state.current_df_filtered = df_filtered
 
     exploded_filtered_dfs = [contrat_unite_filtered,
@@ -125,6 +123,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
     occurences_1 = df_filtered.groupby(["Type contrat","Phase"]).size().reset_index(name="Nombre")
     occurences_2 = df_filtered.groupby(["Outil du cadre","Phase"]).size().reset_index(name="Nombre")
     tab1, tab2 = st.tabs(["Type contrat","📊 Outil du cadre "])
+    
     with tab1:
         # Stacked bars with properly positioned labels
         chart = alt.Chart(occurences_1).mark_bar().encode(
@@ -135,8 +134,6 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
         st.write(chart)
         st.write("### Données", occurences_1)
-
-
 
     with tab2:
         st.write("## Outil du cadre et Phase")

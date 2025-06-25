@@ -11,15 +11,12 @@ st.header("Bilan d'activité")
 Outil de bilan d'activité générale \n
 Pour les analyses ci-dessous on a uniquement les contrats « en gestion » et « archivé »
 """
-
+# NOTE: "Numero contrat" is the primary key (unique identifier) for the dataframe
 st.title("Tableau de bord") 
 st.write("Suivi d'activité globale des labo et aide au développement")
 
-# NOTE: "Numero contrat" is the primary key (unique identifier) for the dataframe
 
-
-
-if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # For testing purposes, set uploaded_file to True
+if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: 
     
     df= st.session_state.get("df", "Not set") # already processed
     # Filter data based on 'Service' and 'Phase'
@@ -28,7 +25,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     st.write("* Phase : en gestion, archivé")
     st.write("----")
 
-    # add a date filter
+    # Add a date filter
     min_value = df["Year"].min()  
     max_value = df["Year"].max()        
     selected_range = st.slider("Année", min_value, max_value, (2021, max_value))
@@ -36,7 +33,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     filters=create_filters(df, # TODO: we need to pass the filtered dataframe
                            exploded_dfs=st.session_state.current_exploded_dfs, #st.session_state.current_exploded_dfs,
                            columns=["Intitule structure","Code structure"])
-    print("Applied filters - bilan  =" ,filters)
+    print("Applied filters (bilan)  =" ,filters) # debug 
 
     
     [contrat_unite,
@@ -44,7 +41,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     contrat_acteur,
     contrat_typeacteur]=st.session_state.current_exploded_dfs
     
-    # Filter 
+    # Default filters  
     df_use = df[(df["Service"] == "DRV FSI développement") & 
                      (df["Phase"].isin(["en gestion", "archivé"]))  & (df["Year"] >= selected_range[0] ) & (df["Year"] <= selected_range[1] ) ].copy()
 
@@ -62,10 +59,10 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
             raise KeyError(" something wrong ")
 
 
-
-
-
+    #-------------------------------------------------
     # Prepare data for use
+    #-------------------------------------------------
+
     df_use = df_use[["Numero contrat", "Date Création", "Date Premier Contact", "Type projet","Intitule structure","Code structure",
                           "Acteurs::Type", "Phase", "Montant Gestion UPMC", "Date de l'action","Acteurs::Sous-type",'Financeurs::Type',
        'Financeurs::Sous-type', 'Financeurs::Classe',"Date Signature"]]
@@ -85,11 +82,9 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
     )
 
     df_use["Financeurs::Sous-type"] = df_use["Financeurs::Sous-type"].str.replace("Agences", "ANR", regex=False) 
-    #ANR
 
-    
-    
-    
+
+
     # display table
     st.write("### Data Table")
     st.dataframe(df_use)
@@ -148,11 +143,11 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
 
     montant_chart_acteur_soutype = alt.Chart(grouped_df).mark_bar().encode(
         x=alt.X("soustype:N",sort="-y", title="Acteurs::Sous-type"),
-        y=alt.Y("Montant Gestion UPMC:Q", title="Montant Gestion UPMC (€)"),
+        y=alt.Y("Montant Gestion UPMC:Q", title="Montant Gestion SU (€)"),
         color=alt.Color("soustype:N", legend=None),  # 👈 remove legend,
         tooltip=["soustype:N", "Montant Gestion UPMC:Q"]
     ).properties(
-        title="Montant Gestion UPMC moyen"
+        title="Montant Gestion SU moyen"
     )
     
     # ----------------------------------------------------
@@ -171,26 +166,22 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]: # 
 
     montant_chart_financeur_soutype = alt.Chart(grouped_df).mark_bar().encode(
         x=alt.X("x_axis_col:N",sort="-y", title=x_axis_col),
-        y=alt.Y(f"{y_axis_col}:Q", title="Montant Gestion UPMC (€)"),
+        y=alt.Y(f"{y_axis_col}:Q", title="Montant Gestion SU (€)"),
         color=alt.Color("x_axis_col:N", legend=None),  # 👈 remove legend,
         tooltip=["x_axis_col:N", "Montant Gestion UPMC:Q"]
     ).properties(
-        title="Montant Gestion UPMC "
+        title="Montant Gestion SU "
     )
 
     # Display the charts
-    st.write("***Pour la somme Montant Gestion UPMC , Les contrats sans montant spécifié ne sont pas pris en compte ! .***")
+    st.write("***Pour la somme Montant Gestion SU , Les contrats sans montant spécifié ne sont pas pris en compte ! .***")
 
     tab1,= st.tabs(["Financeur soustype"])
     with tab1:
         st.altair_chart(montant_chart_financeur_soutype, use_container_width=True)
         #st.altair_chart(chart_stacked, use_container_width=True) 
-
-
 else:
-
     st.write("***Merci de télécharger un fichier dans la page Dashbord ! .***")
-    st.write("----")
 
 
 

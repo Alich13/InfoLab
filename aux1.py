@@ -79,12 +79,10 @@ def multi_separate(df,columns_to_explode):
     return exploded_dfs
 
 
-def create_filters(df, # NOTE THIS IS THE FILTERED DATAFRAME
+def create_filters(df, 
                    exploded_dfs : list,
-                   columns : list ):
+                   columns : list )-> dict:
     """
-    NOTE: we start from the filtered dataframe so that we get ONLY the values that are present in the filtered dataframe
-    and not all the values in the original dataframe
     Create filters for the dataframe based on the columns provided.
     Args:
         df (pd.DataFrame): The dataframe to filter.
@@ -129,6 +127,7 @@ def create_filters(df, # NOTE THIS IS THE FILTERED DATAFRAME
             else:
                 selected_values = st.multiselect(column_to_display, unique_values)
 
+            # If the user selects any values, add them to the filters dictionary
             if selected_values:
                 filters[column] = selected_values
 

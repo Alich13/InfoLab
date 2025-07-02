@@ -4,3 +4,4 @@ __pycache__/
 build/
 datasym
 .DS_Store
+00_explore.ipynb

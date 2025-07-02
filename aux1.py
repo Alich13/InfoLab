@@ -51,9 +51,11 @@ def format_axis(df,col,type)->alt.Axis:
     # Dynamically calculate tickCount based on the maximum value of "Nombre"
     max_nombre = df[col].max()
 
-    if max_nombre < 10:
+    if max_nombre == 1:
         tick_count = 1
         return alt.Axis(format=type, tickCount=tick_count)
+    elif max_nombre < 10:
+        return alt.Axis(format=type, tickMinStep=2)
     else:
         return alt.Axis(format=type) # automatically determines tickCount
 

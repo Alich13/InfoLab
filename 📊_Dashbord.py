@@ -122,7 +122,8 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
     occurences_1 = df_filtered.groupby(["Type contrat","Phase"]).size().reset_index(name="Nombre")
     occurences_2 = df_filtered.groupby(["Outil du cadre","Phase"]).size().reset_index(name="Nombre")
-    tab1, tab2 = st.tabs(["Type contrat","📊 Outil du cadre "])
+    occurences_3 = df_filtered.groupby(["Contact princpal DR&I","Phase"]).size().reset_index(name="Nombre")
+    tab1, tab2 ,tab3 = st.tabs(["Type contrat","📊 Outil du cadre ","contact principale DRI  "])
     
     with tab1:
         # Stacked bars with properly positioned labels
@@ -145,6 +146,18 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
         st.write(chart)
         st.write("### Données", occurences_2)
+
+    with tab3:
+        
+        # Stacked bars with properly positioned labels
+        chart = alt.Chart(occurences_3).mark_bar().encode(
+            x=alt.X("Nombre:Q", title="Nombre", axis=format_axis(occurences_3,"Nombre",'d')), 
+            y=alt.Y("Contact princpal DR&I:N", sort="-x", title="Contact principal DR&I"),
+            color=alt.Color("Phase:N")
+        ).properties(width=800, height=600)
+
+        st.write(chart)
+        st.write("### Données", occurences_3)
 
 
     st.write("---") # -----------------------------------------------------------------------------------------
@@ -210,7 +223,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
     st.write("---") # -----------------------------------------------------------------------------------------
 
-    tab7, = st.tabs(["Financeurs::Soustype & Montant Global moyen"])  # Unpack the single tab
+    tab7, = st.tabs(["Financeurs soustype & Montant Global moyen"])  # Unpack the single tab
 
     with tab7:
         # montant by Financeurs::Sous-type

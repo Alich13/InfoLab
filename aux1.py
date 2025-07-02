@@ -214,6 +214,7 @@ def preprocess(df):
     df["Phase"] = df.apply(lambda x : "Abandonné" if x["Action"] in ["Abandonné","Refusé"] else x["Phase"] , axis=1) 
     df["Outil du cadre"] = df.apply(lambda x : "Autres cadres" if x["Outil du cadre"] in ["Introuvable","Autres"] else x["Outil du cadre"] , axis=1) 
     df["Financeurs::Sous-type"] = df.apply(lambda x : "Non spécifié" if x["Financeurs::Sous-type"] in ["Introuvable"] else x["Financeurs::Sous-type"] , axis=1) 
+    df["Financeurs::Sous-type"] = df.apply(lambda x : "Etabl public recherche" if x["Financeurs::Sous-type"] in ["Opérateurs de recherche"] else x["Financeurs::Sous-type"] , axis=1) 
 
         
     pd.to_datetime(df["Date Premier Contact"], format="%d/%m/%Y") # convert date columns to datetime

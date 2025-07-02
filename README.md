@@ -59,6 +59,7 @@ L'application effectue plusieurs étapes de préprocessing automatique pour opti
 - Les projets avec `Action` = "Abandonné" ou "Refusé" → `Phase` = "Abandonné"
 - Les valeurs "Introuvable" ou "Autres" → "Autres cadres"
 - `Financeurs::Sous-type` "Introuvable" → "Non spécifié"
+- `Financeurs::Sous-type` "Opérateurs de recherche" → "Etabl public recherche"
 - Dans l'onglet bilan dans `Financeurs::Sous-type`, `Agences` → `ANR`
 
 ### Explosion des Colonnes Multi-Valeurs

@@ -241,7 +241,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
         x_dispaly_name = "financeurSousType"
 
         # preprocess Financeurs::Sous-type
-        df_filtered=df_filtered[df_filtered[y_axis_col]>0]
+        #df_filtered=df_filtered[df_filtered[y_axis_col]>0]
         
         grouped_df = df_filtered.groupby(x_axis_col)[y_axis_col].sum().reset_index()
         grouped_df = grouped_df.sort_values(by=y_axis_col, ascending=False)

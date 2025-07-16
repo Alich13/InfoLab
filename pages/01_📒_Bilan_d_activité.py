@@ -97,7 +97,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]:
     #----------------------------------------------------------------------------
     # Montant Gestion UPMC by type_acteur_plot 
     st.write("***Somme Montants Globaux (€)***")
-    df_montant_plot = df_use[df_use["Montant Gestion UPMC"] > 0]  # Filter out rows where Montant Gestion UPMC is 0 or negative
+    #df_montant_plot = df_use[df_use["Montant Gestion UPMC"] > 0]  # Filter out rows where Montant Gestion UPMC is 0 or negative
     chart_montant=plot_grouped_bar(df_montant_plot, "type_acteur_plot", "Montant Gestion UPMC", title="", xlabel=None, ylabel=None)
     st.altair_chart(chart_montant, use_container_width=True)
 
@@ -136,7 +136,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]:
     sigle_merged=sigle.merge(df_use, left_on="Numero contrat", right_on="Numero contrat", how="left")
     sigle_merged = sigle_merged.rename(columns={'Acteurs::Sous-type_x': 'soustype'})
     # Filter out rows where Montant Gestion UPMC is 0 or negative
-    df_montant_plot = sigle_merged[sigle_merged["Montant Gestion UPMC"] > 0]
+    #df_montant_plot = sigle_merged[sigle_merged["Montant Gestion UPMC"] > 0]
 
     grouped_df = df_montant_plot.groupby("soustype")["Montant Gestion UPMC"].mean().reset_index()
     grouped_df = grouped_df.sort_values(by="Montant Gestion UPMC", ascending=False)
@@ -159,7 +159,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]:
     sigle_merged = sigle_merged.rename(columns={f"{x_axis_col}_x": 'x_axis_col'})
     
     # Filter out rows where Montant Gestion UPMC is 0 or negative
-    df_montant_plot = sigle_merged[sigle_merged["Montant Gestion UPMC"] > 0]
+    #df_montant_plot = sigle_merged[sigle_merged["Montant Gestion UPMC"] > 0]
 
     grouped_df = df_montant_plot.groupby("x_axis_col")[y_axis_col].sum().reset_index()
     grouped_df = grouped_df.sort_values(by=y_axis_col, ascending=False)

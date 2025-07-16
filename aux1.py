@@ -11,6 +11,13 @@ switch_dict_spelling={
             "Acteurs::Type" : "Type d'acteurs"
         }
 
+switch_dict_values={
+            "Petites et moyennes entreprises (PME), Moins de 50 millions d'€ de CA ET Moins de 250 personnes":"Petites et moyennes entreprises (PME)",
+            "Grandes entreprises, Plus de 1500 millions d'€ de CA OU Plus de 5000 personnes":"Grandes entreprises",
+            "Entreprises de taille intermédiaire (ETI), Moins de 1500 millions d'€ de CA ET Moins de 5000 personnes": "Entreprises de taille intermédiaire (ETI)",
+            "Micro entreprise, Moins de 2 millions d'€ de CA ET Moins de 10 personnes":"Micro entreprise"
+        }
+
 columns = ["Contact princpal DR&I",
                "Service",
                "Intitule structure",
@@ -218,7 +225,11 @@ def preprocess(df):
     df["Outil du cadre"] = df.apply(lambda x : "Autres cadres" if x["Outil du cadre"] in ["Introuvable","Autres"] else x["Outil du cadre"] , axis=1) 
     df["Financeurs::Sous-type"] = df.apply(lambda x : "Non spécifié" if x["Financeurs::Sous-type"] in ["Introuvable"] else x["Financeurs::Sous-type"] , axis=1) 
     df["Financeurs::Sous-type"] = df.apply(lambda x : "Etabl public recherche" if x["Financeurs::Sous-type"] in ["Opérateurs de recherche"] else x["Financeurs::Sous-type"] , axis=1) 
+    
+    for k in switch_dict_values.keys():
+        df["Financeurs::Sous-type"] = df.apply(lambda x : x["Financeurs::Sous-type"].replace(k,switch_dict_values[k]), axis=1) 
 
+    df['Montant Gestion UPMC']  = df['Montant Gestion UPMC'].str.replace(',', '.', regex=False).astype(float)
         
     pd.to_datetime(df["Date Premier Contact"], format="%d/%m/%Y") # convert date columns to datetime
             

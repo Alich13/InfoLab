@@ -39,10 +39,12 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
     # explode the dataframe in columns where there are multiple values separated by "//"
     # NOTE: "Numero contrat" is the primary key (unique identifier) for the dataframe
+    col_to_split = ["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type","Acteurs::Sous-type"]
     exploded_all_dfs=[contrat_unite,
     contrat_codestructure,
     contrat_acteur,
-    contrat_typeacteur] =multi_separate(df,["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type"])
+    contrat_typeacteur,
+    contrat_soustypeacteur] =multi_separate(df,col_to_split)
 
     # set the exploded dataframes in session state first time
     if "current_exploded_dfs" not in st.session_state:
@@ -79,6 +81,10 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
                 filtered_items = contrat_codestructure[contrat_codestructure[column].isin(filter_value)]
                 contracts_to_keep = filtered_items["Numero contrat"].unique()
                 df_filtered = df_filtered[df_filtered["Numero contrat"].isin(filtered_items["Numero contrat"])]
+            elif column == "Acteurs::Sous-type":
+                filtered_items = contrat_soustypeacteur[contrat_soustypeacteur[column].isin(filter_value)]
+                contracts_to_keep = filtered_items["Numero contrat"].unique()
+                df_filtered = df_filtered[df_filtered["Numero contrat"].isin(filtered_items["Numero contrat"])]
             else :    
                 df_filtered = df_filtered[df_filtered[column].isin(filter_value)]
 
@@ -92,7 +98,8 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
     exploded_filtered_dfs = [contrat_unite_filtered,
     contrat_codestructure_filtered,
     contrat_acteur_filtered,
-    contrat_typeacteur_filtered]= multi_separate(df_filtered,["Intitule structure","Code structure","Acteurs::Dénomination","Acteurs::Type"])
+    contrat_typeacteur_filtered,
+    contrat_soustypeacteur_filtered]= multi_separate(df_filtered,col_to_split)
     contrat_RS_filtered=separate(df_filtered,"Contacts Structure",sep=",") # RS = responsable structure
 
 
@@ -162,7 +169,7 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
 
     st.write("---") # -----------------------------------------------------------------------------------------
 
-    tab2,tab3,tab4,tab5 = st.tabs(["Acteurs Dénomination","Contacts Structure","Type acteur","Type de contrat"])
+    tab2,tab3,tab4,tab5 = st.tabs(["Acteurs Dénomination","Contacts Structure","Type acteur","Sous type acteur"])
 
     with tab2:  # COUNT - VERTICAL
         column_name = "Acteurs::Dénomination"
@@ -205,25 +212,26 @@ if uploaded_file or ("uploaded_file" in st.session_state and st.session_state["u
         chart = horizontal_alt_plot(grouped_df4, y_axis_name, y_axis_name, x_axis_name)
         st.write(chart)
 
-    with tab5: # COUNT - HORIZONTAL
-        
-        y_axis_original_col = "Type contrat"
-        y_axis_name = "Type contrat"
-        x_axis_name = "Nombre de contrats"
-        
-        # Group and count occurrences
-        grouped_df5 = df_filtered[y_axis_original_col].value_counts().reset_index()
-        grouped_df5.columns = [y_axis_name, "Count"]
+    with tab5: # COUNT - VERTICAL
 
-        # Use the horizontal plot function from aux1.py
-        chart = horizontal_alt_plot(grouped_df5, y_axis_name, y_axis_name, x_axis_name)
+        column_name = "Acteurs::Sous-type"
+        new_name = "soustype-acteur"
+        y_axis_name = "Nombre de contrats"
+
+        # group and count occurrences
+        grouped_df4 = contrat_soustypeacteur_filtered[column_name].value_counts().reset_index(name="Count")
+        grouped_df4.columns = [new_name, "Count"]
+
+        grouped_df4.loc[grouped_df4[new_name] == "null", new_name] = "non applicable"  # le champs n'a pas été rentrer dans infolab 
+        
+        # Use the vertical plot function from aux1.py
+        chart = vertical_alt_plot(grouped_df4, new_name, y_axis_name)
         st.write(chart)
-
-
+        
 
     st.write("---") # -----------------------------------------------------------------------------------------
 
-    tab7, = st.tabs(["Financeurs soustype & Montant Global moyen"])  # Unpack the single tab
+    tab7, = st.tabs(["Financeurs soustype & Somme Montant Global"])  # Unpack the single tab
 
     with tab7:
         # montant by Financeurs::Sous-type

@@ -99,7 +99,8 @@ def create_filters(df,
     [contrat_unite,
     contrat_codestructure,
     contrat_acteur,
-    contrat_typeacteur] = exploded_dfs
+    contrat_typeacteur,
+    contrat_soustypeacteur] = exploded_dfs
 
     # values to display in the multiselect
     keys={

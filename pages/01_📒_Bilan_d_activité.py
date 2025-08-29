@@ -39,7 +39,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]:
     [contrat_unite,
     contrat_codestructure,
     contrat_acteur,
-    contrat_typeacteur]=st.session_state.current_exploded_dfs
+    contrat_typeacteur,contrat_soustypeacteur]=st.session_state.current_exploded_dfs
     
     # Default filters  
     df_use = df[(df["Service"] == "DRV FSI développement") & 
@@ -67,7 +67,6 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]:
                           "Acteurs::Type", "Phase", "Montant Gestion UPMC", "Date de l'action","Acteurs::Sous-type",'Financeurs::Type',
        'Financeurs::Sous-type', 'Financeurs::Classe',"Date Signature"]]
     
-    df_use['Montant Gestion UPMC'] = df['Montant Gestion UPMC'].str.replace(',', '.', regex=False).astype(float)
     # Calculate duration and aumoins_1_entreprise
     df_use["duree"] = (df_use["Date Signature"] - df_use["Date Premier Contact"]).dt.days
     # if duree is none, set it to -1
@@ -97,7 +96,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]:
     #----------------------------------------------------------------------------
     # Montant Gestion UPMC by type_acteur_plot 
     st.write("***Somme Montants Globaux (€)***")
-    #df_montant_plot = df_use[df_use["Montant Gestion UPMC"] > 0]  # Filter out rows where Montant Gestion UPMC is 0 or negative
+    df_montant_plot = df_use#[df_use["Montant Gestion UPMC"] > 0]  # Filter out rows where Montant Gestion UPMC is 0 or negative
     chart_montant=plot_grouped_bar(df_montant_plot, "type_acteur_plot", "Montant Gestion UPMC", title="", xlabel=None, ylabel=None)
     st.altair_chart(chart_montant, use_container_width=True)
 
@@ -136,7 +135,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]:
     sigle_merged=sigle.merge(df_use, left_on="Numero contrat", right_on="Numero contrat", how="left")
     sigle_merged = sigle_merged.rename(columns={'Acteurs::Sous-type_x': 'soustype'})
     # Filter out rows where Montant Gestion UPMC is 0 or negative
-    #df_montant_plot = sigle_merged[sigle_merged["Montant Gestion UPMC"] > 0]
+    df_montant_plot = sigle_merged#[sigle_merged["Montant Gestion UPMC"] > 0]
 
     grouped_df = df_montant_plot.groupby("soustype")["Montant Gestion UPMC"].mean().reset_index()
     grouped_df = grouped_df.sort_values(by="Montant Gestion UPMC", ascending=False)
@@ -159,7 +158,7 @@ if "uploaded_file" in st.session_state and st.session_state["uploaded_file"]:
     sigle_merged = sigle_merged.rename(columns={f"{x_axis_col}_x": 'x_axis_col'})
     
     # Filter out rows where Montant Gestion UPMC is 0 or negative
-    #df_montant_plot = sigle_merged[sigle_merged["Montant Gestion UPMC"] > 0]
+    df_montant_plot = sigle_merged#[sigle_merged["Montant Gestion UPMC"] > 0]
 
     grouped_df = df_montant_plot.groupby("x_axis_col")[y_axis_col].sum().reset_index()
     grouped_df = grouped_df.sort_values(by=y_axis_col, ascending=False)
